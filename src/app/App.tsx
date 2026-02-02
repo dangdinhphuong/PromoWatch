@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Layout } from "@/app/components/layout";
+import { PageLayout } from "@/app/components/page-layout";
 import { PromotionsTablePage } from "@/app/pages/promotions-table";
 import { DiscountCodesPage } from "@/app/pages/discount-codes";
 import { MappaStylePage } from "@/app/pages/mappa-style";
@@ -18,19 +19,31 @@ function App() {
   return (
     <>
       <Toaster position="top-right" richColors />
-      <Layout 
-        activePage={activePage} 
-        onPageChange={setActivePage}
-        onScrollToSection={handleScrollToSection}
-      >
-        {activePage === "overview" ? (
+      {activePage === "overview" ? (
+        <Layout 
+          activePage={activePage} 
+          onPageChange={setActivePage}
+          onScrollToSection={handleScrollToSection}
+        >
           <MappaStylePage onNavigate={setActivePage} />
-        ) : activePage === "promotions" ? (
+        </Layout>
+      ) : activePage === "promotions" ? (
+        <PageLayout 
+          pageTitle="Trung tâm Khuyến mãi" 
+          sectionTitle="Quản lý tin khuyến mãi"
+          onNavigate={setActivePage}
+        >
           <PromotionsTablePage />
-        ) : (
+        </PageLayout>
+      ) : (
+        <PageLayout 
+          pageTitle="Trung tâm Khuyến mãi" 
+          sectionTitle="Quản lý mã giảm giá"
+          onNavigate={setActivePage}
+        >
           <DiscountCodesPage />
-        )}
-      </Layout>
+        </PageLayout>
+      )}
     </>
   );
 }
