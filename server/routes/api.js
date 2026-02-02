@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { readFile } from "fs/promises";
+import path from "path";
 import { query } from "../db.js";
 import { config } from "../config.js";
 import { fetchJson } from "../services/http.js";
@@ -77,6 +79,18 @@ router.post("/promotions/bloggiamgia/fetch", async (req, res) => {
   try {
     const result = await runBloggiamgia();
     res.json({ ok: true, source: "bloggiamgia", ...result });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
+router.get("/promotions/data", async (req, res) => {
+  try {
+    const filePath = path.resolve("data", "promotions", "data.json");
+    const raw = await readFile(filePath, "utf8");
+    const parsed = raw.trim() ? JSON.parse(raw) : [];
+    const data = Array.isArray(parsed) ? parsed : [];
+    res.json({ ok: true, data });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
   }
