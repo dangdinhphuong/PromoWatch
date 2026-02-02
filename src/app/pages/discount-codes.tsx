@@ -564,102 +564,117 @@ export function DiscountCodesPage() {
         </div>
       </div>
 
-      {/* Voucher Cards Grid */}
+      {/* Voucher Grid */}
       <div className="px-6 pb-6">
-        {loadingVouchers ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <div className="w-16 h-16 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-sm text-gray-600">Đang tải mã giảm giá...</p>
+        <div className="w-full">
+          {loadingVouchers ? (
+            <div className="grid grid-cols-4 gap-4 w-full">
+              {Array.from({ length: 12 }).map((_, index) => (
+                <div key={index} className="bg-white rounded-lg border border-gray-200 overflow-hidden animate-pulse">
+                  <div className="flex">
+                    <div className="w-1 bg-gray-300"></div>
+                    <div className="flex-1 p-4">
+                      <div className="h-10 w-10 bg-gray-300 rounded mb-3"></div>
+                      <div className="h-6 bg-gray-300 rounded mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-3/4 mb-3"></div>
+                      <div className="h-16 bg-gray-300 rounded mb-3"></div>
+                      <div className="flex gap-2">
+                        <div className="flex-1 h-8 bg-gray-300 rounded"></div>
+                        <div className="flex-1 h-8 bg-gray-300 rounded"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-        ) : vouchers.length === 0 ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <p className="text-lg font-bold text-gray-700 mb-2">Không có mã giảm giá</p>
-              <p className="text-sm text-gray-500">Vui lòng chọn platform và danh mục khác</p>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-[1631px]">
-            {vouchers.map((code) => (
-              <div
-                key={code.id}
-                className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow relative"
-              >
-                {/* Main Content */}
-                <div className="flex overflow-hidden rounded-t-lg">
-                  {/* Left Side - Green Box */}
-                  <div
-                    className="w-[105px] flex-shrink-0 relative py-3 px-2"
-                    style={{
-                      backgroundImage: "linear-gradient(119.819deg, rgb(0, 166, 62) 0%, rgb(0, 130, 54) 100%)"
-                    }}
-                  >
-                    {/* Category Icon */}
-                    <div className="mx-auto w-14 h-14 bg-orange-500 rounded-xl shadow-lg flex items-center justify-center mb-2">
-                      <span className="text-2xl">{code.categoryIcon}</span>
-                    </div>
-
-                    {/* Category Label */}
-                    <p className="text-xs font-bold text-white text-center leading-tight">{code.category}</p>
-                  </div>
-
-                  {/* Right Side - Content */}
-                  <div className="flex-1 p-3 min-w-0 pb-8">
-                    {/* Discount */}
-                    <div className="mb-1.5">
-                      <span className="text-sm text-gray-700">Giảm </span>
-                      <span className="text-2xl font-bold text-orange-600">{code.discount}</span>
-                    </div>
-
-                    {/* Min Order */}
-                    <div className="mb-2">
-                      <span className="text-xs text-gray-600">ĐH tối thiểu: </span>
-                      <span className="text-xs font-bold text-gray-900">{code.minOrder}</span>
-                    </div>
-
-                    {/* Description */}
-                    <p className="text-xs text-gray-500 italic mb-2 line-clamp-3 leading-relaxed">
-                      {code.description}
-                    </p>
-
-                    {/* Platform Badge */}
-                    <div>
-                      <p className="text-sm text-orange-600 font-bold">{code.platform}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* HSD Badge - Overlapping bottom-left */}
-                <div className="absolute left-2 bottom-11 z-10">
-                  <div className="bg-white rounded-full border-2 border-green-600 shadow-md px-2.5 py-1 flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-green-600" />
-                    <p className="text-xs font-bold text-green-600">HSD: {code.expiryDate}</p>
-                  </div>
-                </div>
-
-                {/* Footer Actions */}
-                <div className="border-t border-gray-200 px-2 py-2 flex gap-2">
-                  <button
-                    onClick={() => handleViewDetails(code.id)}
-                    className="flex-1 h-9 bg-white border border-gray-300 rounded-md flex items-center justify-center gap-1 hover:bg-gray-50 transition-colors"
-                  >
-                    <Eye className="w-4 h-4 text-gray-700" />
-                    <span className="text-sm font-medium text-gray-700">Chi tiết</span>
-                  </button>
-                  <button
-                    onClick={() => handleCopyCode(code.code)}
-                    className="flex-1 h-9 bg-green-600 rounded-md flex items-center justify-center gap-1 hover:bg-green-700 transition-colors"
-                  >
-                    <Copy className="w-4 h-4 text-white" />
-                    <span className="text-sm font-medium text-white">Copy mã</span>
-                  </button>
-                </div>
+          ) : vouchers.length === 0 ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-center">
+                <p className="text-lg font-bold text-gray-700 mb-2">Không có mã giảm giá</p>
+                <p className="text-sm text-gray-500">Vui lòng chọn platform và danh mục khác</p>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-4 gap-4 w-full">
+              {vouchers.map((code) => (
+                <div
+                  key={code.id}
+                  className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow relative"
+                >
+                  {/* Main Content */}
+                  <div className="flex overflow-hidden rounded-t-lg">
+                    {/* Left Side - Green Box */}
+                    <div
+                      className="w-[105px] flex-shrink-0 relative py-3 px-2"
+                      style={{
+                        backgroundImage: "linear-gradient(119.819deg, rgb(0, 166, 62) 0%, rgb(0, 130, 54) 100%)"
+                      }}
+                    >
+                      {/* Category Icon */}
+                      <div className="mx-auto w-14 h-14 bg-orange-500 rounded-xl shadow-lg flex items-center justify-center mb-2">
+                        <span className="text-2xl">{code.categoryIcon}</span>
+                      </div>
+
+                      {/* Category Label */}
+                      <p className="text-xs font-bold text-white text-center leading-tight">{code.category}</p>
+                    </div>
+
+                    {/* Right Side - Content */}
+                    <div className="flex-1 p-3 min-w-0 pb-8">
+                      {/* Discount */}
+                      <div className="mb-1.5">
+                        <span className="text-sm text-gray-700">Giảm </span>
+                        <span className="text-2xl font-bold text-orange-600">{code.discount}</span>
+                      </div>
+
+                      {/* Min Order */}
+                      <div className="mb-2">
+                        <span className="text-xs text-gray-600">ĐH tối thiểu: </span>
+                        <span className="text-xs font-bold text-gray-900">{code.minOrder}</span>
+                      </div>
+
+                      {/* Description */}
+                      <p className="text-xs text-gray-500 italic mb-2 line-clamp-3 leading-relaxed">
+                        {code.description}
+                      </p>
+
+                      {/* Platform Badge */}
+                      <div>
+                        <p className="text-sm text-orange-600 font-bold">{code.platform}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* HSD Badge - Overlapping bottom-left */}
+                  <div className="absolute left-2 bottom-11 z-10">
+                    <div className="bg-white rounded-full border-2 border-green-600 shadow-md px-2.5 py-1 flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-green-600" />
+                      <p className="text-xs font-bold text-green-600">HSD: {code.expiryDate}</p>
+                    </div>
+                  </div>
+
+                  {/* Footer Actions */}
+                  <div className="border-t border-gray-200 px-2 py-2 flex gap-2">
+                    <button
+                      onClick={() => handleViewDetails(code.id)}
+                      className="flex-1 h-9 bg-white border border-gray-300 rounded-md flex items-center justify-center gap-1 hover:bg-gray-50 transition-colors"
+                    >
+                      <Eye className="w-4 h-4 text-gray-700" />
+                      <span className="text-sm font-medium text-gray-700">Chi tiết</span>
+                    </button>
+                    <button
+                      onClick={() => handleCopyCode(code.code)}
+                      className="flex-1 h-9 bg-green-600 rounded-md flex items-center justify-center gap-1 hover:bg-green-700 transition-colors"
+                    >
+                      <Copy className="w-4 h-4 text-white" />
+                      <span className="text-sm font-medium text-white">Copy mã</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Load More Button */}

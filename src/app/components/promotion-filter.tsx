@@ -244,6 +244,7 @@ export function PromotionFilter({
                   <SelectItem value="vietrade">Vietrade</SelectItem>
                   <SelectItem value="dichvucong">Dịch vụ công</SelectItem>
                   <SelectItem value="crawl">Thu thập tự động</SelectItem>
+                  <SelectItem value="bloggiamgia">Blog Giảm Giá</SelectItem>
                 </SelectContent>
               </Select>
             </div>
