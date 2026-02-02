@@ -25,4 +25,8 @@ export const config = {
     cronEnabled: env.VTR_CRON_ENABLED !== "false",
     cronSchedule: env.VTR_CRON_SCHEDULE || "0 */6 * * *",
   },
+  bloggiamgia: {
+    cronEnabled: env.BGG_CRON_ENABLED !== "false",
+    cronSchedule: env.BGG_CRON_SCHEDULE || "0 */6 * * *",
+  },
 };

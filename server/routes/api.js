@@ -2,8 +2,9 @@ import { Router } from "express";
 import { query } from "../db.js";
 import { config } from "../config.js";
 import { fetchJson } from "../services/http.js";
-import { runDichvucong } from "../dichvucong/index.js";
-import { runVietrade } from "../vietrade/index.js";
+import { runDichvucong } from "../promotions/official/dichvucong/index.js";
+import { runVietrade } from "../promotions/official/vietrade/index.js";
+import { runBloggiamgia } from "../promotions/unofficial/bloggiamgia/index.js";
 
 const router = Router();
 
@@ -67,6 +68,15 @@ router.post("/articles/vietrade/fetch", async (req, res) => {
   try {
     const result = await runVietrade();
     res.json({ ok: true, source: "vietrade", ...result });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/promotions/bloggiamgia/fetch", async (req, res) => {
+  try {
+    const result = await runBloggiamgia();
+    res.json({ ok: true, source: "bloggiamgia", ...result });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
   }

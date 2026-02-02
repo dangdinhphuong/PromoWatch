@@ -1,8 +1,9 @@
 import cron from "node-cron";
 import { config } from "./config.js";
 import { query } from "./db.js";
-import { runDichvucong } from "./dichvucong/index.js";
-import { runVietrade } from "./vietrade/index.js";
+import { runDichvucong } from "./promotions/official/dichvucong/index.js";
+import { runVietrade } from "./promotions/official/vietrade/index.js";
+import { runBloggiamgia } from "./promotions/unofficial/bloggiamgia/index.js";
 
 export function startCron({ logger = console } = {}) {
   if (!config.cron.enabled) {
@@ -56,6 +57,23 @@ export function startCron({ logger = console } = {}) {
     vtrTask.start();
   } else {
     logger.info("Vietrade cron disabled via VTR_CRON_ENABLED=false");
+  }
+
+  if (config.bloggiamgia.cronEnabled) {
+    const bggTask = cron.schedule(config.bloggiamgia.cronSchedule, async () => {
+      logger.info(`[cron] bloggiamgia job at ${new Date().toISOString()}`);
+      try {
+        const result = await runBloggiamgia();
+        logger.info(
+          `[cron] bloggiamgia saved ${result.saved} new records (total ${result.total})`
+        );
+      } catch (error) {
+        logger.warn(`[cron] bloggiamgia failed: ${error.message}`);
+      }
+    });
+    bggTask.start();
+  } else {
+    logger.info("Bloggiamgia cron disabled via BGG_CRON_ENABLED=false");
   }
 
   return task;

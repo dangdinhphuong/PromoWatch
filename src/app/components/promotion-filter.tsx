@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Search, RotateCcw, Download, ChevronDown, ChevronUp, Filter } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
@@ -10,21 +9,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/components/ui/select";
-import { Slider } from "@/app/components/ui/slider";
 
 interface PromotionFilterProps {
   onSearch: () => void;
   onReset: () => void;
   onExport: () => void;
   filters: {
-    sourceType: string;
-    legalStatus: string;
-    startDate: string;
-    endDate: string;
-    location: string;
-    company: string;
-    productType: string;
-    discountRange: number[];
+    keyword: string;
+    applicableTimeRange: string;
+    applicableStartDate: string;
+    applicableEndDate: string;
+    type: string;
+    source: string;
+    collectedTimeRange: string;
+    collectedStartDate: string;
+    collectedEndDate: string;
   };
   onFilterChange: (key: string, value: any) => void;
 }
@@ -38,41 +37,81 @@ export function PromotionFilter({
 }: PromotionFilterProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const handleApplicableTimeRangeChange = (value: string) => {
+    onFilterChange("applicableTimeRange", value);
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (value === "today") {
+      const todayStr = today.toISOString().split('T')[0];
+      onFilterChange("applicableStartDate", todayStr);
+      onFilterChange("applicableEndDate", todayStr);
+    } else if (value === "next7days") {
+      const next7 = new Date(today);
+      next7.setDate(today.getDate() + 7);
+      onFilterChange("applicableStartDate", today.toISOString().split('T')[0]);
+      onFilterChange("applicableEndDate", next7.toISOString().split('T')[0]);
+    } else if (value === "thisMonth") {
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      onFilterChange("applicableStartDate", firstDay.toISOString().split('T')[0]);
+      onFilterChange("applicableEndDate", lastDay.toISOString().split('T')[0]);
+    } else if (value === "thisQuarter") {
+      const quarter = Math.floor(today.getMonth() / 3);
+      const firstDay = new Date(today.getFullYear(), quarter * 3, 1);
+      const lastDay = new Date(today.getFullYear(), quarter * 3 + 3, 0);
+      onFilterChange("applicableStartDate", firstDay.toISOString().split('T')[0]);
+      onFilterChange("applicableEndDate", lastDay.toISOString().split('T')[0]);
+    } else if (value === "custom") {
+      // Tùy chọn - không làm gì
+    }
+  };
+
+  const handleCollectedTimeRangeChange = (value: string) => {
+    onFilterChange("collectedTimeRange", value);
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (value === "today") {
+      const todayStr = today.toISOString().split('T')[0];
+      onFilterChange("collectedStartDate", todayStr);
+      onFilterChange("collectedEndDate", todayStr);
+    } else if (value === "last7days") {
+      const last7 = new Date(today);
+      last7.setDate(today.getDate() - 7);
+      onFilterChange("collectedStartDate", last7.toISOString().split('T')[0]);
+      onFilterChange("collectedEndDate", today.toISOString().split('T')[0]);
+    } else if (value === "custom") {
+      // Tùy chọn
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-      {/* Header */}
-      <div 
-        className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors border-b border-gray-200"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="flex items-center gap-3">
-          <div className="bg-blue-100 p-2 rounded-lg">
-            <Filter className="h-5 w-5 text-blue-700" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">Bộ lọc tìm kiếm</h3>
-            <p className="text-sm text-gray-500">
-              {isExpanded ? "Nhấp để thu gọn bộ lọc" : "Nhấp để mở rộng bộ lọc"}
-            </p>
-          </div>
+      {/* Header with action buttons */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+        <h3 className="text-sm font-semibold text-gray-900">Bộ lọc tìm kiếm</h3>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="h-8" onClick={onReset}>
+            Reset
+          </Button>
+          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-8" onClick={onSearch}>
+            Tìm kiếm
+          </Button>
+          <Button variant="outline" size="sm" className="bg-green-50 border-green-600 text-green-700 hover:bg-green-100 h-8" onClick={onExport}>
+            Export
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            {isExpanded ? "Thu gọn" : "Mở rộng"}
+          </Button>
         </div>
-        <Button 
-          variant="ghost" 
-          size="sm"
-          className="gap-2"
-        >
-          {isExpanded ? (
-            <>
-              <ChevronUp className="h-5 w-5" />
-              Thu gọn
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-5 w-5" />
-              Mở rộng
-            </>
-          )}
-        </Button>
       </div>
 
       {/* Collapsible Content */}
@@ -81,155 +120,133 @@ export function PromotionFilter({
           isExpanded ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
         }`}
       >
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            {/* Loại nguồn */}
-            <div className="space-y-2">
-              <Label htmlFor="sourceType">Loại nguồn</Label>
-              <Select
-                value={filters.sourceType}
-                onValueChange={(value) => onFilterChange("sourceType", value)}
-              >
-                <SelectTrigger id="sourceType">
-                  <SelectValue placeholder="Chọn loại nguồn" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả</SelectItem>
-                  <SelectItem value="official">Chính thống</SelectItem>
-                  <SelectItem value="unofficial">Không chính thống</SelectItem>
-                </SelectContent>
-              </Select>
+        <div className="p-4 space-y-4">
+          {/* Row 1: Keyword */}
+          <div className="space-y-1.5">
+            <Label htmlFor="keyword" className="text-sm font-medium">Từ khóa</Label>
+            <Input
+              id="keyword"
+              type="text"
+              placeholder="Tìm theo tên, công ty, mã..."
+              value={filters.keyword}
+              onChange={(e) => onFilterChange("keyword", e.target.value)}
+              className="h-9"
+            />
+          </div>
+
+          {/* Row 2: Time range filters - 2 columns */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Thời gian áp dụng */}
+            <div className="space-y-1.5 p-3 bg-blue-50 rounded-md border border-blue-200">
+              <Label className="text-sm font-medium text-gray-900">Thời gian áp dụng</Label>
+              <div className="grid grid-cols-3 gap-2">
+                <Select value={filters.applicableTimeRange} onValueChange={handleApplicableTimeRangeChange}>
+                  <SelectTrigger className="h-9 text-xs bg-white">
+                    <SelectValue placeholder="Tất cả" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả</SelectItem>
+                    <SelectItem value="today">Hôm nay</SelectItem>
+                    <SelectItem value="next7days">7 ngày tới</SelectItem>
+                    <SelectItem value="thisMonth">Tháng này</SelectItem>
+                    <SelectItem value="thisQuarter">Quý này</SelectItem>
+                    <SelectItem value="custom">Tùy chọn</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="date"
+                  placeholder="dd/mm/yyyy"
+                  value={filters.applicableStartDate}
+                  onChange={(e) => {
+                    onFilterChange("applicableStartDate", e.target.value);
+                    onFilterChange("applicableTimeRange", "custom");
+                  }}
+                  className="h-9 text-xs bg-white"
+                />
+                <Input
+                  type="date"
+                  placeholder="dd/mm/yyyy"
+                  value={filters.applicableEndDate}
+                  onChange={(e) => {
+                    onFilterChange("applicableEndDate", e.target.value);
+                    onFilterChange("applicableTimeRange", "custom");
+                  }}
+                  className="h-9 text-xs bg-white"
+                />
+              </div>
             </div>
 
-            {/* Trạng thái pháp lý */}
-            <div className="space-y-2">
-              <Label htmlFor="legalStatus">Trạng thái pháp lý</Label>
-              <Select
-                value={filters.legalStatus}
-                onValueChange={(value) => onFilterChange("legalStatus", value)}
-              >
-                <SelectTrigger id="legalStatus">
-                  <SelectValue placeholder="Chọn trạng thái" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả</SelectItem>
-                  <SelectItem value="registered">Đã đăng ký</SelectItem>
-                  <SelectItem value="unknown">Chưa xác định</SelectItem>
-                  <SelectItem value="suspicious">Nghi vấn</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Từ ngày */}
-            <div className="space-y-2">
-              <Label htmlFor="startDate">Từ ngày</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={filters.startDate}
-                onChange={(e) => onFilterChange("startDate", e.target.value)}
-              />
-            </div>
-
-            {/* Đến ngày */}
-            <div className="space-y-2">
-              <Label htmlFor="endDate">Đến ngày</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={filters.endDate}
-                onChange={(e) => onFilterChange("endDate", e.target.value)}
-              />
-            </div>
-
-            {/* Địa điểm */}
-            <div className="space-y-2">
-              <Label htmlFor="location">Địa điểm</Label>
-              <Select
-                value={filters.location}
-                onValueChange={(value) => onFilterChange("location", value)}
-              >
-                <SelectTrigger id="location">
-                  <SelectValue placeholder="Chọn địa điểm" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toàn quốc</SelectItem>
-                  <SelectItem value="hanoi">Hà Nội</SelectItem>
-                  <SelectItem value="hcm">TP. Hồ Chí Minh</SelectItem>
-                  <SelectItem value="danang">Đà Nẵng</SelectItem>
-                  <SelectItem value="cantho">Cần Thơ</SelectItem>
-                  <SelectItem value="haiphong">Hải Phòng</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Doanh nghiệp */}
-            <div className="space-y-2">
-              <Label htmlFor="company">Doanh nghiệp</Label>
-              <Input
-                id="company"
-                type="text"
-                placeholder="Nhập tên doanh nghiệp"
-                value={filters.company}
-                onChange={(e) => onFilterChange("company", e.target.value)}
-              />
-            </div>
-
-            {/* Loại mặt hàng */}
-            <div className="space-y-2">
-              <Label htmlFor="productType">Loại mặt hàng</Label>
-              <Select
-                value={filters.productType}
-                onValueChange={(value) => onFilterChange("productType", value)}
-              >
-                <SelectTrigger id="productType">
-                  <SelectValue placeholder="Chọn loại mặt hàng" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả</SelectItem>
-                  <SelectItem value="electronics">Điện tử - Điện lạnh</SelectItem>
-                  <SelectItem value="food">Thực phẩm - Đồ uống</SelectItem>
-                  <SelectItem value="fashion">Thời trang</SelectItem>
-                  <SelectItem value="cosmetics">Mỹ phẩm</SelectItem>
-                  <SelectItem value="household">Đồ gia dụng</SelectItem>
-                  <SelectItem value="other">Khác</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* % giảm giá slider */}
-            <div className="space-y-2">
-              <Label htmlFor="discountRange">
-                % Giảm giá: {filters.discountRange[0]}% - {filters.discountRange[1]}%
-              </Label>
-              <div className="pt-3">
-                <Slider
-                  id="discountRange"
-                  min={0}
-                  max={100}
-                  step={5}
-                  value={filters.discountRange}
-                  onValueChange={(value) => onFilterChange("discountRange", value)}
-                  className="w-full"
+            {/* Thời điểm thu thập */}
+            <div className="space-y-1.5 p-3 bg-purple-50 rounded-md border border-purple-200">
+              <Label className="text-sm font-medium text-gray-900">Thời điểm thu thập</Label>
+              <div className="grid grid-cols-3 gap-2">
+                <Select value={filters.collectedTimeRange} onValueChange={handleCollectedTimeRangeChange}>
+                  <SelectTrigger className="h-9 text-xs bg-white">
+                    <SelectValue placeholder="Tất cả" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả</SelectItem>
+                    <SelectItem value="today">Hôm nay</SelectItem>
+                    <SelectItem value="last7days">7 ngày gần đây</SelectItem>
+                    <SelectItem value="custom">Tùy chọn</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="date"
+                  placeholder="dd/mm/yyyy"
+                  value={filters.collectedStartDate}
+                  onChange={(e) => {
+                    onFilterChange("collectedStartDate", e.target.value);
+                    onFilterChange("collectedTimeRange", "custom");
+                  }}
+                  className="h-9 text-xs bg-white"
+                />
+                <Input
+                  type="date"
+                  placeholder="dd/mm/yyyy"
+                  value={filters.collectedEndDate}
+                  onChange={(e) => {
+                    onFilterChange("collectedEndDate", e.target.value);
+                    onFilterChange("collectedTimeRange", "custom");
+                  }}
+                  className="h-9 text-xs bg-white"
                 />
               </div>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-            <Button onClick={onReset} variant="outline" className="gap-2">
-              <RotateCcw className="h-4 w-4" />
-              Reset bộ lọc
-            </Button>
-            <Button onClick={onSearch} className="gap-2 bg-blue-600 hover:bg-blue-700">
-              <Search className="h-4 w-4" />
-              Tìm kiếm
-            </Button>
-            <Button onClick={onExport} variant="outline" className="gap-2 bg-green-50 border-green-600 text-green-700 hover:bg-green-100">
-              <Download className="h-4 w-4" />
-              Export Excel
-            </Button>
+          {/* Row 3: Type & Source - 2 columns */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="type" className="text-sm font-medium">
+                Tính pháp lý <span className="text-red-600 text-xs">(Quan trọng)</span>
+              </Label>
+              <Select value={filters.type} onValueChange={(value) => onFilterChange("type", value)}>
+                <SelectTrigger id="type" className="h-9">
+                  <SelectValue placeholder="Tất cả" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  <SelectItem value="official">Chính thức</SelectItem>
+                  <SelectItem value="unofficial">Không chính thức</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="source" className="text-sm font-medium">Nguồn dữ liệu</Label>
+              <Select value={filters.source} onValueChange={(value) => onFilterChange("source", value)}>
+                <SelectTrigger id="source" className="h-9">
+                  <SelectValue placeholder="Tất cả" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  <SelectItem value="vietrade">Vietrade</SelectItem>
+                  <SelectItem value="dichvucong">Dịch vụ công</SelectItem>
+                  <SelectItem value="crawl">Thu thập tự động</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>

@@ -1,9 +1,8 @@
-import { ExternalLink, X, Calendar, MapPin, Building2, Package, Percent, Clock, FileText, Shield, AlertTriangle } from "lucide-react";
+import { ExternalLink, X, Calendar, MapPin, Building2, Package, Percent, Clock, FileText, Shield, AlertTriangle, Database } from "lucide-react";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import type { PromotionData } from "./promotion-table";
-import { FileDown, FileImage, File, FileSpreadsheet, FileType, Paperclip } from "lucide-react";
 
 interface PromotionDetailModalProps {
   promotion: PromotionData | null;
@@ -18,42 +17,45 @@ export function PromotionDetailModal({
 }: PromotionDetailModalProps) {
   if (!promotion) return null;
 
-  const getSourceBadge = (type: "official" | "unofficial") => {
+  const getTypeBadge = (type: "official" | "unofficial") => {
     if (type === "official") {
       return (
         <Badge className="bg-green-100 text-green-800 border-green-300 px-3 py-1">
           <Shield className="h-4 w-4 mr-1" />
-          Nguồn chính thống
+          Chính thức
         </Badge>
       );
     }
     return (
       <Badge className="bg-orange-100 text-orange-800 border-orange-300 px-3 py-1">
         <AlertTriangle className="h-4 w-4 mr-1" />
-        Nguồn không chính thống
+        Không chính thức
       </Badge>
     );
   };
 
-  const getLegalBadge = (status: "registered" | "unknown" | "suspicious") => {
+  const getSourceBadge = (source: "dichvucong" | "vietrade" | "crawl") => {
     const badges = {
-      registered: (
+      dichvucong: (
         <Badge className="bg-blue-600 text-white border-blue-700 px-4 py-1.5 text-sm font-semibold">
-          ✓ Đã đăng ký hợp pháp
+          <Database className="h-4 w-4 mr-1" />
+          Dịch vụ công
         </Badge>
       ),
-      unknown: (
-        <Badge className="bg-gray-500 text-white border-gray-600 px-4 py-1.5 text-sm font-semibold">
-          ? Chưa xác định
+      vietrade: (
+        <Badge className="bg-green-600 text-white border-green-700 px-4 py-1.5 text-sm font-semibold">
+          <Database className="h-4 w-4 mr-1" />
+          Vietrade
         </Badge>
       ),
-      suspicious: (
-        <Badge className="bg-red-600 text-white border-red-700 px-4 py-1.5 text-sm font-semibold">
-          ! Nghi vấn - Cần kiểm tra
+      crawl: (
+        <Badge className="bg-purple-600 text-white border-purple-700 px-4 py-1.5 text-sm font-semibold">
+          <Database className="h-4 w-4 mr-1" />
+          Thu thập tự động
         </Badge>
       ),
     };
-    return badges[status];
+    return badges[source];
   };
 
   const highlightKeywords = (text: string) => {
@@ -71,65 +73,52 @@ export function PromotionDetailModal({
     return highlighted;
   };
 
-  const getFileIcon = (type: "pdf" | "image" | "excel" | "word" | "other") => {
-    switch (type) {
-      case "pdf":
-        return <FileText className="h-5 w-5 text-red-600" />;
-      case "image":
-        return <FileImage className="h-5 w-5 text-blue-600" />;
-      case "excel":
-        return <FileSpreadsheet className="h-5 w-5 text-green-600" />;
-      case "word":
-        return <FileType className="h-5 w-5 text-blue-700" />;
-      default:
-        return <File className="h-5 w-5 text-gray-600" />;
-    }
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "N/A";
+    if (dateStr.includes("/")) return dateStr;
+    const date = new Date(dateStr);
+    return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
   };
 
-  const getFileTypeColor = (type: "pdf" | "image" | "excel" | "word" | "other") => {
-    switch (type) {
-      case "pdf":
-        return "bg-red-50 border-red-200";
-      case "image":
-        return "bg-blue-50 border-blue-200";
-      case "excel":
-        return "bg-green-50 border-green-200";
-      case "word":
-        return "bg-blue-50 border-blue-200";
-      default:
-        return "bg-gray-50 border-gray-200";
-    }
+  const formatDateTime = (isoStr: string) => {
+    if (!isoStr) return "N/A";
+    const date = new Date(isoStr);
+    return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
   };
 
-  const mockContent = `
-Chương trình khuyến mãi "${promotion.name}" được tổ chức bởi ${promotion.company}, áp dụng từ ngày ${promotion.startDate} đến ngày ${promotion.endDate}.
+  // Generate content from meta data
+  const getContent = () => {
+    if (promotion.meta?.rawB?.content) {
+      return promotion.meta.rawB.content;
+    }
+    
+    // Generate default content
+    let content = `Chương trình khuyến mãi "${promotion.name}" được tổ chức bởi ${promotion.company}`;
+    
+    if (promotion.time.start && promotion.time.end) {
+      content += `, áp dụng từ ngày ${formatDate(promotion.time.start)} đến ngày ${formatDate(promotion.time.end)}.`;
+    }
 
-🎯 CHI TIẾT ƯU ĐÃI KHUYẾN MÃI:
+    if (promotion.location) {
+      content += `\n\n📍 KHU VỰC ÁP DỤNG:\n${promotion.location}`;
+    }
 
-• Giảm giá ${promotion.discount}% cho tất cả sản phẩm thuộc nhóm ${promotion.productType}
-• Sale đặc biệt vào cuối tuần với nhiều ưu đãi hấp dẫn
-• Tặng voucher giảm giá 100.000đ cho đơn hàng tiếp theo (áp dụng cho đơn từ 500.000đ)
-• Miễn phí vận chuyển toàn quốc cho đơn hàng từ 300.000đ
-• Tích điểm thưởng x2 trong thời gian khuyến mãi
+    if (promotion.productType) {
+      content += `\n\n🛒 LOẠI SẢN PHẨM:\n${promotion.productType}`;
+    }
 
-📍 KHU VỰC ÁP DỤNG:
-${promotion.location}
+    if (promotion.promotionMethod) {
+      content += `\n\n🎯 PHƯƠNG THỨC:\n${promotion.promotionMethod}`;
+    }
 
-🛒 ĐIỀU KIỆN & QUY ĐỊNH:
-• Áp dụng cho tất cả khách hàng (không phân biệt thành viên mới hay cũ)
-• Không giới hạn số lượng sản phẩm trong một đơn hàng
-• Không áp dụng đồng thời với các chương trình khuyến mãi khác
-• Sản phẩm khuyến mãi không được đổi/trả sau khi mua
-• Công ty có quyền thay đổi điều khoản mà không cần báo trước
+    if (promotion.discountPercent) {
+      content += `\n\n💰 GIẢM GIÁ:\n${promotion.discountPercent}%`;
+    }
 
-📞 THÔNG TIN LIÊN HỆ:
-• Hotline: 1900 xxxx (8:00 - 22:00 hàng ngày)
-• Email: support@${promotion.company.toLowerCase().replace(/\s+/g, '')}.vn
-• Website: ${promotion.sourceUrl}
+    return content.trim();
+  };
 
-⚠️ LƯU Ý QUAN TRỌNG:
-Quý khách vui lòng kiểm tra kỹ thông tin sản phẩm, giá cả và điều khoản trước khi tham gia chương trình. Mọi thắc mắc xin liên hệ hotline để được hỗ trợ.
-  `.trim();
+  const content = getContent();
 
   return (
     <DialogPrimitive.Root open={isOpen} onOpenChange={onClose} modal>
@@ -151,7 +140,7 @@ Quý khách vui lòng kiểm tra kỹ thông tin sản phẩm, giá cả và đi
                     Chi tiết Chương trình Khuyến Mãi
                   </DialogPrimitive.Title>
                   <DialogPrimitive.Description className="text-blue-100 text-sm mt-1">
-                    Mã số: {promotion.id} • Thu thập: {promotion.collectedAt}
+                    Mã số: {promotion.code} • Thu thập: {formatDateTime(promotion.crawledAt)}
                   </DialogPrimitive.Description>
                 </div>
               </div>
@@ -169,12 +158,12 @@ Quý khách vui lòng kiểm tra kỹ thông tin sản phẩm, giá cả và đi
               <div className="mb-6 bg-gradient-to-r from-white to-blue-50 rounded-lg shadow-sm border-l-4 border-blue-600 p-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <span className="text-sm font-bold text-gray-700 uppercase tracking-wide">Trạng thái pháp lý:</span>
-                    {getLegalBadge(promotion.legalStatus)}
+                    <span className="text-sm font-bold text-gray-700 uppercase tracking-wide">Nguồn thu thập:</span>
+                    {getSourceBadge(promotion.source)}
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-sm font-bold text-gray-700 uppercase tracking-wide">Loại nguồn:</span>
-                    {getSourceBadge(promotion.sourceType)}
+                    <span className="text-sm font-bold text-gray-700 uppercase tracking-wide">Loại:</span>
+                    {getTypeBadge(promotion.type)}
                   </div>
                 </div>
               </div>
@@ -200,15 +189,17 @@ Quý khách vui lòng kiểm tra kỹ thông tin sản phẩm, giá cả và đi
                     </div>
                     
                     {/* Discount Badge */}
-                    <div className="mt-5 pt-5 border-t border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-gray-700">Mức giảm giá:</span>
-                        <div className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg">
-                          <Percent className="h-7 w-7" />
-                          <span className="text-4xl font-bold">{promotion.discount}%</span>
+                    {promotion.discountPercent !== null && (
+                      <div className="mt-5 pt-5 border-t border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-bold text-gray-700">Mức giảm giá:</span>
+                          <div className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg">
+                            <Percent className="h-7 w-7" />
+                            <span className="text-4xl font-bold">{promotion.discountPercent}%</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* Company Info */}
@@ -241,44 +232,65 @@ Quý khách vui lòng kiểm tra kỹ thông tin sản phẩm, giá cả và đi
                       <div className="grid grid-cols-2 gap-5 pl-12">
                         <div>
                           <span className="text-xs text-gray-500 font-semibold block mb-1.5">Từ ngày:</span>
-                          <span className="text-base font-bold text-gray-900">{promotion.startDate}</span>
+                          <span className="text-base font-bold text-gray-900">{formatDate(promotion.time.start)}</span>
                         </div>
                         <div>
                           <span className="text-xs text-gray-500 font-semibold block mb-1.5">Đến ngày:</span>
-                          <span className="text-base font-bold text-gray-900">{promotion.endDate}</span>
+                          <span className="text-base font-bold text-gray-900">{formatDate(promotion.time.end)}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Location */}
-                    <div className="bg-white rounded-xl shadow-md p-5 border border-gray-200 hover:shadow-lg transition-shadow">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="bg-orange-100 p-2.5 rounded-xl">
-                          <MapPin className="h-6 w-6 text-orange-700" />
+                    {promotion.location && (
+                      <div className="bg-white rounded-xl shadow-md p-5 border border-gray-200 hover:shadow-lg transition-shadow">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="bg-orange-100 p-2.5 rounded-xl">
+                            <MapPin className="h-6 w-6 text-orange-700" />
+                          </div>
+                          <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
+                            Khu vực áp dụng
+                          </h3>
                         </div>
-                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
-                          Khu vực áp dụng
-                        </h3>
+                        <p className="text-base font-bold text-gray-900 pl-12">
+                          {promotion.location}
+                        </p>
                       </div>
-                      <p className="text-base font-bold text-gray-900 pl-12">
-                        {promotion.location}
-                      </p>
-                    </div>
+                    )}
 
                     {/* Product Type */}
-                    <div className="bg-white rounded-xl shadow-md p-5 border border-gray-200 hover:shadow-lg transition-shadow">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="bg-teal-100 p-2.5 rounded-xl">
-                          <Package className="h-6 w-6 text-teal-700" />
+                    {promotion.productType && (
+                      <div className="bg-white rounded-xl shadow-md p-5 border border-gray-200 hover:shadow-lg transition-shadow">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="bg-teal-100 p-2.5 rounded-xl">
+                            <Package className="h-6 w-6 text-teal-700" />
+                          </div>
+                          <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
+                            Loại sản phẩm
+                          </h3>
                         </div>
-                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
-                          Loại mặt hàng
-                        </h3>
+                        <p className="text-base font-bold text-gray-900 pl-12">
+                          {promotion.productType}
+                        </p>
                       </div>
-                      <p className="text-base font-bold text-gray-900 pl-12">
-                        {promotion.productType}
-                      </p>
-                    </div>
+                    )}
+
+                    {/* Promotion Method */}
+                    {promotion.promotionMethod && (
+                      <div className="bg-white rounded-xl shadow-md p-5 border border-gray-200 hover:shadow-lg transition-shadow">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="bg-cyan-100 p-2.5 rounded-xl">
+                            <Shield className="h-6 w-6 text-cyan-700" />
+                          </div>
+                          <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
+                            Phương thức khuyến mãi
+                          </h3>
+                        </div>
+                        <p className="text-base font-bold text-gray-900 pl-12">
+                          {promotion.promotionMethod}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -288,70 +300,49 @@ Quý khách vui lòng kiểm tra kỹ thông tin sản phẩm, giá cả và đi
                     <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-gray-50 to-white">
                       <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                         <FileText className="h-5 w-5 text-blue-600" />
-                        Nội dung chi tiết chương trình khuyến mãi
+                        Nội dung chi tiết chương trình
                       </h3>
                     </div>
                     <div className="p-6">
                       <div 
                         className="prose prose-sm max-w-none text-gray-700 whitespace-pre-line leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: highlightKeywords(mockContent) }}
+                        dangerouslySetInnerHTML={{ __html: highlightKeywords(content) }}
                       />
+
+                      {/* File attachment info */}
+                      {promotion.meta?.rawB?.file && (
+                        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="flex items-center gap-2 text-blue-800">
+                            <FileText className="h-5 w-5" />
+                            <span className="font-semibold">File đính kèm:</span>
+                          </div>
+                          <p className="text-sm text-blue-700 mt-2 font-mono">
+                            {promotion.meta.rawB.file}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
-
-              {/* Attachments Section */}
-              {promotion.attachments && promotion.attachments.length > 0 && (
-                <div className="mt-6 bg-white rounded-xl shadow-md border border-gray-200">
-                  <div className="border-b border-gray-200 px-6 py-4 bg-gradient-to-r from-gray-50 to-white">
-                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                      <Paperclip className="h-5 w-5 text-indigo-600" />
-                      File đính kèm ({promotion.attachments.length})
-                    </h3>
-                  </div>
-                  <div className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {promotion.attachments.map((file) => (
-                        <div
-                          key={file.id}
-                          className={`flex items-center gap-3 p-4 rounded-lg border-2 hover:shadow-md transition-all cursor-pointer group ${getFileTypeColor(file.type)}`}
-                          onClick={() => window.open(file.url, "_blank")}
-                        >
-                          <div className="flex-shrink-0">
-                            {getFileIcon(file.type)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-blue-700 transition-colors">
-                              {file.name}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              {file.size}
-                            </p>
-                          </div>
-                          <FileDown className="h-4 w-4 text-gray-400 group-hover:text-blue-600 transition-colors flex-shrink-0" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Action Bar */}
               <div className="mt-6 bg-white rounded-xl shadow-md border border-gray-200 p-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Clock className="h-4 w-4 text-blue-600" />
-                    <span className="font-medium">Cập nhật lần cuối: {promotion.collectedAt}</span>
+                    <span className="font-medium">Thu thập lúc: {formatDateTime(promotion.crawledAt)}</span>
                   </div>
                   <div className="flex gap-3">
-                    <Button
-                      onClick={() => window.open(promotion.sourceUrl, "_blank")}
-                      className="gap-2 bg-blue-600 hover:bg-blue-700 px-6 shadow-md hover:shadow-lg transition-all"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      Mở trang nguồn
-                    </Button>
+                    {promotion.sourceUrl && (
+                      <Button
+                        onClick={() => window.open(promotion.sourceUrl!, "_blank")}
+                        className="gap-2 bg-blue-600 hover:bg-blue-700 px-6 shadow-md hover:shadow-lg transition-all"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Mở trang nguồn
+                      </Button>
+                    )}
                     <Button
                       onClick={onClose}
                       variant="outline"

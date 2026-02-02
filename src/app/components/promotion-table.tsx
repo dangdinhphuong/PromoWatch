@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, ExternalLink, ChevronUp, ChevronDown } from "lucide-react";
+import { Eye, ExternalLink, ChevronUp, ChevronDown, FileText } from "lucide-react";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
 import { Checkbox } from "@/app/components/ui/checkbox";
@@ -22,25 +22,29 @@ import {
 } from "@/app/components/ui/pagination";
 
 export interface PromotionData {
-  id: string;
+  id: string | null;
+  code: string;
   name: string;
   company: string;
-  startDate: string;
-  endDate: string;
-  location: string;
-  productType: string;
-  discount: number;
-  sourceType: "official" | "unofficial";
-  legalStatus: "registered" | "unknown" | "suspicious";
-  sourceUrl: string;
-  collectedAt: string;
-  attachments?: Array<{
-    id: string;
-    name: string;
-    type: "pdf" | "image" | "excel" | "word" | "other";
-    size: string;
-    url: string;
-  }>;
+  time: {
+    start: string;
+    end: string;
+  };
+  location: string | null;
+  productType: string | null;
+  discountPercent: number | null;
+  promotionMethod: string | null;
+  type: "official" | "unofficial";
+  agencyId: string | null;
+  total: number | null;
+  rowStt: number | null;
+  source: "dichvucong" | "vietrade" | "crawl";
+  sourceUrl: string | null;
+  crawledAt: string;
+  meta: {
+    rawA: any;
+    rawB: any;
+  };
 }
 
 interface PromotionTableProps {
@@ -48,45 +52,45 @@ interface PromotionTableProps {
   onViewDetail: (promotion: PromotionData) => void;
 }
 
-type SortField = "collectedAt" | "discount" | "startDate";
+type SortField = "crawledAt" | "discountPercent" | "time";
 type SortOrder = "asc" | "desc";
 
 export function PromotionTable({ data, onViewDetail }: PromotionTableProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortField, setSortField] = useState<SortField>("collectedAt");
+  const [sortField, setSortField] = useState<SortField>("crawledAt");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const itemsPerPage = 10;
 
-  const getSourceBadge = (type: "official" | "unofficial") => {
-    if (type === "official") {
-      return <Badge className="bg-green-100 text-green-800 border-green-300">Chính thống</Badge>;
-    }
-    return <Badge className="bg-orange-100 text-orange-800 border-orange-300">Không chính thống</Badge>;
+  const getSourceBadge = (source: "dichvucong" | "vietrade" | "crawl") => {
+    const badges = {
+      dichvucong: <Badge className="bg-blue-100 text-blue-800 border-blue-300 text-xs px-1.5 py-0">Dịch vụ công</Badge>,
+      vietrade: <Badge className="bg-green-100 text-green-800 border-green-300 text-xs px-1.5 py-0">Vietrade</Badge>,
+      crawl: <Badge className="bg-purple-100 text-purple-800 border-purple-300 text-xs px-1.5 py-0">Thu thập</Badge>,
+    };
+    return badges[source];
   };
 
-  const getLegalBadge = (status: "registered" | "unknown" | "suspicious") => {
-    const badges = {
-      registered: <Badge className="bg-blue-100 text-blue-800 border-blue-300">Đã đăng ký</Badge>,
-      unknown: <Badge className="bg-gray-100 text-gray-800 border-gray-300">Chưa xác định</Badge>,
-      suspicious: <Badge className="bg-red-100 text-red-800 border-red-300">Nghi vấn</Badge>,
-    };
-    return badges[status];
+  const getTypeBadge = (type: "official" | "unofficial") => {
+    if (type === "official") {
+      return <Badge className="bg-green-100 text-green-800 border-green-300">Chính thức</Badge>;
+    }
+    return <Badge className="bg-orange-100 text-orange-800 border-orange-300">Không chính thức</Badge>;
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedIds(data.map((item) => item.id));
+      setSelectedIds(data.map((item) => item.code));
     } else {
       setSelectedIds([]);
     }
   };
 
-  const handleSelectOne = (id: string, checked: boolean) => {
+  const handleSelectOne = (code: string, checked: boolean) => {
     if (checked) {
-      setSelectedIds([...selectedIds, id]);
+      setSelectedIds([...selectedIds, code]);
     } else {
-      setSelectedIds(selectedIds.filter((selectedId) => selectedId !== id));
+      setSelectedIds(selectedIds.filter((selectedId) => selectedId !== code));
     }
   };
 
@@ -100,15 +104,19 @@ export function PromotionTable({ data, onViewDetail }: PromotionTableProps) {
   };
 
   const sortedData = [...data].sort((a, b) => {
-    let aValue: any = a[sortField];
-    let bValue: any = b[sortField];
+    let aValue: any;
+    let bValue: any;
 
-    if (sortField === "discount") {
-      aValue = Number(aValue);
-      bValue = Number(bValue);
+    if (sortField === "discountPercent") {
+      aValue = a.discountPercent || 0;
+      bValue = b.discountPercent || 0;
+    } else if (sortField === "time") {
+      aValue = new Date(a.time.start.split("/").reverse().join("-")).getTime();
+      bValue = new Date(b.time.start.split("/").reverse().join("-")).getTime();
     } else {
-      aValue = new Date(aValue).getTime();
-      bValue = new Date(bValue).getTime();
+      // crawledAt
+      aValue = new Date(a.crawledAt).getTime();
+      bValue = new Date(b.crawledAt).getTime();
     }
 
     if (sortOrder === "asc") {
@@ -131,95 +139,111 @@ export function PromotionTable({ data, onViewDetail }: PromotionTableProps) {
     );
   };
 
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "N/A";
+    // If already formatted as DD/MM/YYYY, return as is
+    if (dateStr.includes("/")) return dateStr;
+    // If ISO format, convert to DD/MM/YYYY
+    const date = new Date(dateStr);
+    return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
+  };
+
+  const formatDateTime = (isoStr: string) => {
+    if (!isoStr) return "N/A";
+    const date = new Date(isoStr);
+    return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  };
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-blue-50 hover:bg-blue-50">
-              <TableHead className="w-[50px]">
+              <TableHead className="w-[40px] p-2">
                 <Checkbox
                   checked={selectedIds.length === data.length && data.length > 0}
                   onCheckedChange={handleSelectAll}
                 />
               </TableHead>
-              <TableHead className="w-[60px]">STT</TableHead>
-              <TableHead className="min-w-[250px]">Tên chương trình khuyến mãi</TableHead>
-              <TableHead className="min-w-[200px]">Công ty / Đơn vị</TableHead>
+              <TableHead className="w-[50px] p-2 text-xs">STT</TableHead>
+              <TableHead className="min-w-[250px] p-2 text-xs">Tên chương trình</TableHead>
+              <TableHead className="min-w-[180px] p-2 text-xs">Công ty / Đơn vị</TableHead>
               <TableHead 
-                className="min-w-[180px] cursor-pointer hover:bg-blue-100"
-                onClick={() => handleSort("startDate")}
+                className="min-w-[130px] p-2 cursor-pointer hover:bg-blue-100 text-xs"
+                onClick={() => handleSort("time")}
               >
-                Thời gian áp dụng <SortIcon field="startDate" />
+                Thời gian áp dụng <SortIcon field="time" />
               </TableHead>
-              <TableHead className="min-w-[150px]">Địa điểm</TableHead>
-              <TableHead className="min-w-[150px]">Loại mặt hàng</TableHead>
+              <TableHead className="min-w-[120px] p-2 text-xs">Địa điểm</TableHead>
+              <TableHead className="min-w-[130px] p-2 text-xs">Loại mặt hàng</TableHead>
+              <TableHead className="min-w-[110px] p-2 text-xs">Nguồn</TableHead>
               <TableHead 
-                className="w-[100px] cursor-pointer hover:bg-blue-100"
-                onClick={() => handleSort("discount")}
+                className="min-w-[130px] p-2 cursor-pointer hover:bg-blue-100 text-xs"
+                onClick={() => handleSort("crawledAt")}
               >
-                % Giảm giá <SortIcon field="discount" />
+                Thời điểm thu thập <SortIcon field="crawledAt" />
               </TableHead>
-              <TableHead className="min-w-[140px]">Loại nguồn</TableHead>
-              <TableHead className="min-w-[140px]">Trạng thái pháp lý</TableHead>
-              <TableHead className="min-w-[100px]">Nguồn</TableHead>
-              <TableHead 
-                className="min-w-[150px] cursor-pointer hover:bg-blue-100"
-                onClick={() => handleSort("collectedAt")}
-              >
-                Thời điểm thu thập <SortIcon field="collectedAt" />
-              </TableHead>
-              <TableHead className="w-[100px] text-center">Hành động</TableHead>
+              <TableHead className="w-[80px] p-2 text-center text-xs">Hành động</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginatedData.map((item, index) => (
               <TableRow
-                key={item.id}
+                key={item.code || index}
                 className="hover:bg-gray-50 transition-colors"
               >
-                <TableCell>
+                <TableCell className="p-2">
                   <Checkbox
-                    checked={selectedIds.includes(item.id)}
+                    checked={selectedIds.includes(item.code)}
                     onCheckedChange={(checked) =>
-                      handleSelectOne(item.id, checked as boolean)
+                      handleSelectOne(item.code, checked as boolean)
                     }
                   />
                 </TableCell>
-                <TableCell>{startIndex + index + 1}</TableCell>
-                <TableCell>{item.name}</TableCell>
-                <TableCell>{item.company}</TableCell>
-                <TableCell>
-                  {item.startDate} - {item.endDate}
+                <TableCell className="p-2 text-xs">{startIndex + index + 1}</TableCell>
+                <TableCell className="p-2">
+                  <div className="max-w-[250px]">
+                    <p className="text-xs font-medium text-gray-900 line-clamp-2">{item.name}</p>
+                  </div>
                 </TableCell>
-                <TableCell>{item.location}</TableCell>
-                <TableCell>{item.productType}</TableCell>
-                <TableCell className="text-center">
-                  <span className="inline-block px-2 py-1 rounded bg-red-50 text-red-700 font-medium">
-                    {item.discount}%
-                  </span>
+                <TableCell className="p-2">
+                  <div className="max-w-[180px]">
+                    <p className="text-xs text-gray-700 truncate">{item.company}</p>
+                  </div>
                 </TableCell>
-                <TableCell>{getSourceBadge(item.sourceType)}</TableCell>
-                <TableCell>{getLegalBadge(item.legalStatus)}</TableCell>
-                <TableCell>
-                  <a
-                    href={item.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 inline-flex items-center gap-1"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
+                <TableCell className="p-2">
+                  <div className="text-xs whitespace-nowrap">
+                    <div>{formatDate(item.time.start)}</div>
+                    <div className="text-gray-500">→ {formatDate(item.time.end)}</div>
+                  </div>
                 </TableCell>
-                <TableCell>{item.collectedAt}</TableCell>
-                <TableCell className="text-center">
+                <TableCell className="p-2">
+                  {item.location ? (
+                    <span className="text-xs text-gray-700 line-clamp-1">{item.location}</span>
+                  ) : (
+                    <span className="text-gray-400 text-xs">N/A</span>
+                  )}
+                </TableCell>
+                <TableCell className="p-2">
+                  {item.productType ? (
+                    <span className="text-xs text-gray-700 line-clamp-1">{item.productType}</span>
+                  ) : (
+                    <span className="text-gray-400 text-xs">N/A</span>
+                  )}
+                </TableCell>
+                <TableCell className="p-2">{getSourceBadge(item.source)}</TableCell>
+                <TableCell className="p-2">
+                  <span className="text-xs text-gray-600 whitespace-nowrap">{formatDateTime(item.crawledAt)}</span>
+                </TableCell>
+                <TableCell className="p-2 text-center">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onViewDetail(item)}
-                    className="gap-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                    className="gap-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 h-7 text-xs px-2"
                   >
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-3.5 w-3.5" />
                     Xem
                   </Button>
                 </TableCell>

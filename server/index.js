@@ -1,7 +1,10 @@
+import dns from "dns";
 import express from "express";
 import apiRouter from "./routes/api.js";
 import { config } from "./config.js";
 import { startCron } from "./cron.js";
+
+dns.setDefaultResultOrder("ipv4first");
 
 const app = express();
 
