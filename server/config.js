@@ -16,6 +16,7 @@ export const config = {
     enabled: env.CRON_ENABLED !== "false",
     schedule: env.CRON_SCHEDULE || "*/5 * * * *",
     dbPing: env.CRON_DB_PING === "true",
+    serial: env.CRON_SERIAL === "true",
   },
   dichvucong: {
     cronEnabled: env.DVC_CRON_ENABLED !== "false",

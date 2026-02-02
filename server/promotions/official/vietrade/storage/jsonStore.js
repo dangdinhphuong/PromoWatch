@@ -1,6 +1,7 @@
 import path from "path";
-import { mkdir, readFile, writeFile } from "fs/promises";
+import { mkdir, readFile, writeFile, rename } from "fs/promises";
 import { logger } from "../utils/logger.js";
+import { withFileLock } from "../../../utils/fileLock.js";
 
 const LEGACY_DIR = path.resolve("data", "articles", "vietrade");
 const LEGACY_FILE = path.join(LEGACY_DIR, "vietrade.json");
@@ -54,7 +55,11 @@ async function readJsonArray(filePath) {
 }
 
 async function writeJsonArray(filePath, items) {
-  await writeFile(filePath, JSON.stringify(items, null, 2), "utf8");
+  await withFileLock(filePath, async () => {
+    const tempPath = `${filePath}.tmp`;
+    await writeFile(tempPath, JSON.stringify(items, null, 2), "utf8");
+    await rename(tempPath, filePath);
+  });
 }
 
 function mergeVietradeRecords(existing, incoming) {

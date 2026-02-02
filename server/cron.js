@@ -21,11 +21,49 @@ export function startCron({ logger = console } = {}) {
         logger.warn(`[cron] db ping failed: ${error.message}`);
       }
     }
+
+    if (config.cron.serial) {
+      if (config.dichvucong.cronEnabled) {
+        logger.info(`[cron] dichvucong job at ${new Date().toISOString()}`);
+        try {
+          const result = await runDichvucong();
+          logger.info(
+            `[cron] dichvucong saved ${result.saved} new records (total ${result.total})`
+          );
+        } catch (error) {
+          logger.warn(`[cron] dichvucong failed: ${error.message}`);
+        }
+      }
+
+      if (config.vietrade.cronEnabled) {
+        logger.info(`[cron] vietrade job at ${new Date().toISOString()}`);
+        try {
+          const result = await runVietrade();
+          logger.info(
+            `[cron] vietrade saved ${result.saved} new records (total ${result.total})`
+          );
+        } catch (error) {
+          logger.warn(`[cron] vietrade failed: ${error.message}`);
+        }
+      }
+
+      if (config.bloggiamgia.cronEnabled) {
+        logger.info(`[cron] bloggiamgia job at ${new Date().toISOString()}`);
+        try {
+          const result = await runBloggiamgia();
+          logger.info(
+            `[cron] bloggiamgia saved ${result.saved} new records (total ${result.total})`
+          );
+        } catch (error) {
+          logger.warn(`[cron] bloggiamgia failed: ${error.message}`);
+        }
+      }
+    }
   });
 
   task.start();
 
-  if (config.dichvucong.cronEnabled) {
+  if (!config.cron.serial && config.dichvucong.cronEnabled) {
     const dvcTask = cron.schedule(config.dichvucong.cronSchedule, async () => {
       logger.info(`[cron] dichvucong job at ${new Date().toISOString()}`);
       try {
@@ -38,11 +76,11 @@ export function startCron({ logger = console } = {}) {
       }
     });
     dvcTask.start();
-  } else {
+  } else if (!config.cron.serial) {
     logger.info("Dichvucong cron disabled via DVC_CRON_ENABLED=false");
   }
 
-  if (config.vietrade.cronEnabled) {
+  if (!config.cron.serial && config.vietrade.cronEnabled) {
     const vtrTask = cron.schedule(config.vietrade.cronSchedule, async () => {
       logger.info(`[cron] vietrade job at ${new Date().toISOString()}`);
       try {
@@ -55,11 +93,11 @@ export function startCron({ logger = console } = {}) {
       }
     });
     vtrTask.start();
-  } else {
+  } else if (!config.cron.serial) {
     logger.info("Vietrade cron disabled via VTR_CRON_ENABLED=false");
   }
 
-  if (config.bloggiamgia.cronEnabled) {
+  if (!config.cron.serial && config.bloggiamgia.cronEnabled) {
     const bggTask = cron.schedule(config.bloggiamgia.cronSchedule, async () => {
       logger.info(`[cron] bloggiamgia job at ${new Date().toISOString()}`);
       try {
@@ -72,7 +110,7 @@ export function startCron({ logger = console } = {}) {
       }
     });
     bggTask.start();
-  } else {
+  } else if (!config.cron.serial) {
     logger.info("Bloggiamgia cron disabled via BGG_CRON_ENABLED=false");
   }
 
