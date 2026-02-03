@@ -89,11 +89,46 @@ router.get("/promotions/data", async (req, res) => {
     const filePath = path.resolve("data", "promotions", "data.json");
     const raw = await readFile(filePath, "utf8");
     const parsed = raw.trim() ? JSON.parse(raw) : [];
-    const data = Array.isArray(parsed) ? parsed : [];
-    res.json({ ok: true, data });
+    const data = Array.isArray(parsed)
+      ? parsed
+      : parsed && Array.isArray(parsed.promotions)
+      ? parsed.promotions
+      : [];
+
+    const pageParam = req.query.page;
+    const pageSizeParam = req.query.pageSize ?? req.query.limit;
+
+    const page = Math.max(1, Number.parseInt(String(pageParam ?? "1"), 10) || 1);
+    const pageSize = Math.min(
+      500,
+      Math.max(1, Number.parseInt(String(pageSizeParam ?? "20"), 10) || 20)
+    );
+
+    const total = data.length;
+    const totalPages = total === 0 ? 0 : Math.ceil(total / pageSize);
+    const safePage = totalPages === 0 ? 1 : Math.min(page, totalPages);
+    const startIndex = (safePage - 1) * pageSize;
+    const pagedData = data.slice(startIndex, startIndex + pageSize);
+
+    return res.json({
+      ok: true,
+      data: pagedData,
+      pagination: {
+        page: safePage,
+        pageSize,
+        total,
+        totalPages,
+        hasNext: safePage < totalPages,
+        hasPrev: safePage > 1,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ ok: false, message: error.message });
+    console.error(`API Error: ${error.message}`);
+    res.status(500).json({ ok: false, message: "Internal Server Error" });
   }
 });
 
 export default router;
+
+
+

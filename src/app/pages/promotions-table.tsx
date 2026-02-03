@@ -1,168 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PromotionFilter } from "@/app/components/promotion-filter";
-import { PromotionTable, type PromotionData } from "@/app/components/promotion-table";
+import {
+  PromotionTable,
+  type PromotionData,
+  type PromotionPagination,
+} from "@/app/components/promotion-table";
 import { PromotionDetailModal } from "@/app/components/promotion-detail-modal";
 import { AlertDialog } from "@/app/components/ui/alert-dialog";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
-// Mock data - real data structure from the system
-const mockPromotions: PromotionData[] = [
-  {
-    id: null,
-    code: "G22.99-251225-020175",
-    name: "Chương trình chăm sóc khách hàng thường xuyên lâu năm",
-    company: "MOBIFONE NGHỆ AN - CHI NHÁNH TỔNG CÔNG TY VIỄN THÔNG MOBIFONE",
-    time: {
-      start: "01/01/2026",
-      end: "31/12/2026"
-    },
-    location: "Tỉnh Nghệ An",
-    productType: null,
-    discountPercent: null,
-    promotionMethod: null,
-    type: "official",
-    agencyId: "-1",
-    total: 36662,
-    rowStt: 427,
-    source: "dichvucong",
-    sourceUrl: null,
-    crawledAt: "2026-02-02T07:04:37.514Z",
-    meta: {
-      rawA: null,
-      rawB: {
-        url: null,
-        title: "Chương trình chăm sóc khách hàng thường xuyên lâu năm",
-        company: "MOBIFONE NGHỆ AN - CHI NHÁNH TỔNG CÔNG TY VIỄN THÔNG MOBIFONE",
-        content: "Chi tiết theo File đính kèm",
-        file: "20251225/promotion_96678922-c28c-4cfc-8927-fa00bd3293f5_1766649068050_signed.pdf",
-        timeRange: "01/01/2026 - 31/12/2026"
-      }
-    }
-  },
-  {
-    id: 5269,
-    code: "nhan-2-nhan-4-tich-diem-don-hang-unilever",
-    name: "Nhân 2 – Nhân 4 tích điểm đơn hàng Unilever",
-    company: "Bách Hóa Xanh",
-    time: {
-      start: "02/12/2025",
-      end: "31/12/2025"
-    },
-    location: "Toàn quốc",
-    productType: "SP tại Bách Hoá Xanh",
-    discountPercent: null,
-    promotionMethod: "Khách hàng thường xuyên",
-    type: "official",
-    agencyId: null,
-    total: null,
-    rowStt: null,
-    source: "vietrade",
-    sourceUrl: "https://kmttqg.vietrade.gov.vn/tin-khuyen-mai/5269/nhan-2-nhan-4-tich-diem-don-hang-unilever",
-    crawledAt: "2026-02-02T04:42:08.906Z",
-    meta: {
-      rawA: null,
-      rawB: {
-        url: "https://kmttqg.vietrade.gov.vn/tin-khuyen-mai/5269/nhan-2-nhan-4-tich-diem-don-hang-unilever",
-        title: "Nhân 2 – Nhân 4 tích điểm đơn hàng Unilever",
-        company: "Bách Hóa Xanh",
-        timeRange: "02/12/2025 - 31/12/2025"
-      }
-    }
-  },
-  {
-    id: 5270,
-    code: "chuong-trinh-kh-than-thiet-t122025",
-    name: "Chương trình KH thân thiết T12/2025",
-    company: "Highlands Coffee",
-    time: {
-      start: "19/12/2025",
-      end: "31/01/2026"
-    },
-    location: "Toàn quốc",
-    productType: "Menu Highlands",
-    discountPercent: null,
-    promotionMethod: "Khách hàng thường xuyên",
-    type: "official",
-    agencyId: null,
-    total: null,
-    rowStt: null,
-    source: "vietrade",
-    sourceUrl: "https://kmttqg.vietrade.gov.vn/tin-khuyen-mai/5270/chuong-trinh-kh-than-thiet-t122025",
-    crawledAt: "2026-02-02T04:42:10.210Z",
-    meta: {
-      rawA: null,
-      rawB: {
-        url: "https://kmttqg.vietrade.gov.vn/tin-khuyen-mai/5270/chuong-trinh-kh-than-thiet-t122025",
-        title: "Chương trình KH thân thiết T12/2025",
-        company: "Highlands Coffee",
-        timeRange: "19/12/2025 - 31/01/2026"
-      }
-    }
-  },
-  {
-    id: 5271,
-    code: "khuyen-mai-xuan-2026",
-    name: "Khuyến mại Xuân 2026",
-    company: "Imexpharm CN Cửu Long 5",
-    time: {
-      start: "03/12/2025",
-      end: "15/12/2025"
-    },
-    location: "Cà Mau",
-    productType: "Dược phẩm",
-    discountPercent: null,
-    promotionMethod: "KH thường xuyên",
-    type: "official",
-    agencyId: null,
-    total: null,
-    rowStt: null,
-    source: "vietrade",
-    sourceUrl: "https://kmttqg.vietrade.gov.vn/tin-khuyen-mai/5271/khuyen-mai-xuan-2026",
-    crawledAt: "2026-02-02T04:42:11.559Z",
-    meta: {
-      rawA: null,
-      rawB: {
-        url: "https://kmttqg.vietrade.gov.vn/tin-khuyen-mai/5271/khuyen-mai-xuan-2026",
-        title: "Khuyến mại Xuân 2026",
-        company: "Imexpharm CN Cửu Long 5",
-        timeRange: "03/12/2025 - 15/12/2025"
-      }
-    }
-  },
-  {
-    id: null,
-    code: "paulas-choice-khuyen-mai",
-    name: "Mừng Lazada 9 Tuổi, Paula's Choice Tặng Quà To Nè Bạn Ơi!",
-    company: "Lazada",
-    time: {
-      start: "31/03/2021",
-      end: "31/03/2021"
-    },
-    location: null,
-    productType: null,
-    discountPercent: null,
-    promotionMethod: null,
-    type: "unofficial",
-    agencyId: null,
-    total: null,
-    rowStt: null,
-    source: "crawl",
-    sourceUrl: "https://bloggiamgia.vn/paulas-choice-khuyen-mai",
-    crawledAt: "2026-02-01T10:00:00.000Z",
-    meta: {
-      rawA: null,
-      rawB: {
-        platform: "Lazada",
-        sourceName: "Bloggiamgia.vn",
-        hasHtml: true,
-        content: "HOT HOT HOT! Sự kiện lớn nhất được chờ đợi trong năm đã đến rồi. Paula's Choice đang tổ chức MỪNG SINH NHẬT LẦN THỨ 9 CỦA LAZADA đó!"
-      }
-    }
-  }
-];
-
 export function PromotionsTablePage() {
+  const [promotions, setPromotions] = useState<PromotionData[]>([]);
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+  const [pagination, setPagination] = useState<PromotionPagination>({
+    page: 1,
+    pageSize,
+    total: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false,
+  });
   const [filters, setFilters] = useState({
     keyword: "",
     applicableTimeRange: "all",
@@ -175,37 +34,105 @@ export function PromotionsTablePage() {
     collectedEndDate: "",
   });
 
-  const [filteredData, setFilteredData] = useState<PromotionData[]>(mockPromotions);
+  const [filteredData, setFilteredData] = useState<PromotionData[]>([]);
   const [selectedPromotion, setSelectedPromotion] = useState<PromotionData | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   const displayData = filteredData;
 
+  useEffect(() => {
+    let isActive = true;
+
+    const loadPromotions = async () => {
+      try {
+        const response = await fetch(
+          `/api/promotions/data?page=${page}&limit=${pageSize}`
+        );
+        if (!response.ok) {
+          throw new Error(`Request failed: ${response.status}`);
+        }
+        const payload = await response.json();
+        const data = Array.isArray(payload?.data) ? payload.data : [];
+        const incomingPagination = payload?.pagination;
+        const nextPagination: PromotionPagination = incomingPagination
+          ? {
+              page: incomingPagination.page ?? page,
+              pageSize: incomingPagination.pageSize ?? pageSize,
+              total: incomingPagination.total ?? data.length,
+              totalPages: incomingPagination.totalPages ?? 0,
+              hasNext: incomingPagination.hasNext ?? false,
+              hasPrev: incomingPagination.hasPrev ?? false,
+            }
+          : {
+              page,
+              pageSize,
+              total: data.length,
+              totalPages: data.length ? 1 : 0,
+              hasNext: false,
+              hasPrev: false,
+            };
+
+        if (isActive) {
+          setPromotions(data);
+          setFilteredData(data);
+          setPagination(nextPagination);
+        }
+      } catch (error) {
+        console.error("Load promotions failed:", error);
+        if (isActive) {
+          setPromotions([]);
+          setFilteredData([]);
+          setPagination({
+            page,
+            pageSize,
+            total: 0,
+            totalPages: 0,
+            hasNext: false,
+            hasPrev: false,
+          });
+          toast.error("Khong tai duoc du lieu khuyen mai.");
+        }
+      }
+    };
+
+    loadPromotions();
+
+    return () => {
+      isActive = false;
+    };
+  }, [page, pageSize]);
+
   const handleFilterChange = (key: string, value: any) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
-  const parseDate = (dateStr: string): Date => {
+  const parseDate = (dateStr: string | null | undefined): Date | null => {
+    if (!dateStr) {
+      return null;
+    }
     // Parse DD/MM/YYYY or YYYY-MM-DD format
     if (dateStr.includes("/")) {
       const [day, month, year] = dateStr.split("/");
-      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    } else {
-      return new Date(dateStr);
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      return Number.isNaN(date.getTime()) ? null : date;
     }
+    const date = new Date(dateStr);
+    return Number.isNaN(date.getTime()) ? null : date;
   };
 
+  const safeLower = (value: string | null | undefined) => (value ?? "").toLowerCase();
+
   const handleSearch = () => {
-    let filtered = [...mockPromotions];
+    let filtered = [...promotions];
 
     // 1. Filter by keyword (name, company, code)
     if (filters.keyword.trim()) {
       const keyword = filters.keyword.toLowerCase();
       filtered = filtered.filter((item) => {
-        const name = item.name.toLowerCase();
-        const company = item.company.toLowerCase();
-        const code = item.code.toLowerCase();
+        const name = safeLower(item.name);
+        const company = safeLower(item.company);
+        const code = safeLower(item.code);
         return name.includes(keyword) || company.includes(keyword) || code.includes(keyword);
       });
     }
@@ -215,7 +142,8 @@ export function PromotionsTablePage() {
       const filterDate = new Date(filters.applicableStartDate);
       filterDate.setHours(0, 0, 0, 0);
       filtered = filtered.filter((item) => {
-        const itemStartDate = parseDate(item.time.start);
+        const itemStartDate = parseDate(item.time?.start);
+        if (!itemStartDate) return false;
         itemStartDate.setHours(0, 0, 0, 0);
         return itemStartDate >= filterDate;
       });
@@ -225,7 +153,8 @@ export function PromotionsTablePage() {
       const filterDate = new Date(filters.applicableEndDate);
       filterDate.setHours(23, 59, 59, 999);
       filtered = filtered.filter((item) => {
-        const itemEndDate = parseDate(item.time.end);
+        const itemEndDate = parseDate(item.time?.end);
+        if (!itemEndDate) return false;
         itemEndDate.setHours(23, 59, 59, 999);
         return itemEndDate <= filterDate;
       });
@@ -246,6 +175,7 @@ export function PromotionsTablePage() {
       const filterDate = new Date(filters.collectedStartDate);
       filterDate.setHours(0, 0, 0, 0);
       filtered = filtered.filter((item) => {
+        if (!item.crawledAt) return false;
         const itemDate = new Date(item.crawledAt);
         itemDate.setHours(0, 0, 0, 0);
         return itemDate >= filterDate;
@@ -256,6 +186,7 @@ export function PromotionsTablePage() {
       const filterDate = new Date(filters.collectedEndDate);
       filterDate.setHours(23, 59, 59, 999);
       filtered = filtered.filter((item) => {
+        if (!item.crawledAt) return false;
         const itemDate = new Date(item.crawledAt);
         itemDate.setHours(23, 59, 59, 999);
         return itemDate <= filterDate;
@@ -289,7 +220,7 @@ export function PromotionsTablePage() {
       collectedStartDate: "",
       collectedEndDate: "",
     });
-    setFilteredData(mockPromotions);
+    setFilteredData(promotions);
     toast.info("Đã reset bộ lọc");
   };
 
@@ -301,8 +232,8 @@ export function PromotionsTablePage() {
     try {
       toast.loading("Đang xuất dữ liệu...");
       
-      // Export ALL mock data, not just filtered data
-      const excelData = mockPromotions.map((item, index) => ({
+      // Export ALL data, not just filtered data
+      const excelData = promotions.map((item, index) => ({
         "STT": index + 1,
         "Tên chương trình": item.name,
         "Công ty / Đơn vị": item.company,
@@ -350,7 +281,7 @@ export function PromotionsTablePage() {
 
       setTimeout(() => {
         toast.dismiss();
-        toast.success(`Đã xuất ${mockPromotions.length} bản ghi ra file Excel thành công!`);
+        toast.success(`Đã xuất ${promotions.length} bản ghi ra file Excel thành công!`);
       }, 800);
     } catch (error) {
       toast.dismiss();
@@ -369,6 +300,16 @@ export function PromotionsTablePage() {
     setSelectedPromotion(null);
   };
 
+  const hasActiveFilters =
+    filters.keyword.trim().length > 0 ||
+    filters.applicableStartDate ||
+    filters.applicableEndDate ||
+    filters.type !== "all" ||
+    filters.source !== "all" ||
+    filters.collectedStartDate ||
+    filters.collectedEndDate;
+  const tablePagination = hasActiveFilters ? undefined : pagination;
+
   return (
     <div className="p-6">
       {/* Filter Section */}
@@ -384,7 +325,12 @@ export function PromotionsTablePage() {
 
       {/* Data Table */}
       <div className="w-full">
-        <PromotionTable data={displayData} onViewDetail={handleViewDetail} />
+        <PromotionTable
+          data={displayData}
+          onViewDetail={handleViewDetail}
+          pagination={tablePagination}
+          onPageChange={tablePagination ? setPage : undefined}
+        />
       </div>
 
       {/* Detail Modal */}
@@ -400,7 +346,7 @@ export function PromotionsTablePage() {
         onClose={() => setIsExportDialogOpen(false)}
         onConfirm={handleConfirmExport}
         title="Xuất dữ liệu"
-        description={`Bạn có muốn xuất tất cả ${mockPromotions.length} bản ghi không?`}
+        description={`Bạn có muốn xuất tất cả ${promotions.length} bản ghi không?`}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Eye, ExternalLink, ChevronUp, ChevronDown, FileText } from "lucide-react";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
@@ -48,20 +48,45 @@ export interface PromotionData {
   };
 }
 
+export interface PromotionPagination {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  hasNext?: boolean;
+  hasPrev?: boolean;
+}
+
 interface PromotionTableProps {
   data: PromotionData[];
   onViewDetail: (promotion: PromotionData) => void;
+  pagination?: PromotionPagination;
+  onPageChange?: (page: number) => void;
 }
 
 type SortField = "crawledAt" | "discountPercent" | "time";
 type SortOrder = "asc" | "desc";
 
-export function PromotionTable({ data, onViewDetail }: PromotionTableProps) {
+export function PromotionTable({
+  data,
+  onViewDetail,
+  pagination,
+  onPageChange,
+}: PromotionTableProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("crawledAt");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const itemsPerPage = 10;
+
+  const isServerPaginated = Boolean(pagination && onPageChange);
+
+  useEffect(() => {
+    setSelectedIds([]);
+    if (!isServerPaginated) {
+      setCurrentPage(1);
+    }
+  }, [data, isServerPaginated]);
 
   const getSourceBadge = (source: "dichvucong" | "vietrade" | "crawl" | "bloggiamgia") => {
     const badges = {
@@ -140,9 +165,25 @@ export function PromotionTable({ data, onViewDetail }: PromotionTableProps) {
     }
   });
 
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = sortedData.slice(startIndex, startIndex + itemsPerPage);
+  const effectivePage = isServerPaginated ? pagination!.page : currentPage;
+  const effectivePageSize = isServerPaginated ? pagination!.pageSize : itemsPerPage;
+  const totalItems = isServerPaginated ? pagination!.total : sortedData.length;
+  const totalPages = isServerPaginated
+    ? pagination!.totalPages
+    : Math.ceil(sortedData.length / itemsPerPage);
+  const startIndex = (effectivePage - 1) * effectivePageSize;
+  const paginatedData = isServerPaginated
+    ? sortedData
+    : sortedData.slice(startIndex, startIndex + itemsPerPage);
+  const canPrev = isServerPaginated ? Boolean(pagination!.hasPrev) : effectivePage > 1;
+  const canNext = isServerPaginated ? Boolean(pagination!.hasNext) : effectivePage < totalPages;
+  const handlePageChange = (page: number) => {
+    if (isServerPaginated) {
+      onPageChange?.(page);
+      return;
+    }
+    setCurrentPage(page);
+  };
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return null;
@@ -272,7 +313,7 @@ export function PromotionTable({ data, onViewDetail }: PromotionTableProps) {
       {/* Pagination */}
       <div className="flex items-center justify-between p-4 border-t border-gray-200">
         <div className="text-base font-semibold text-gray-800">
-          Hiển thị {startIndex + 1} - {Math.min(startIndex + itemsPerPage, sortedData.length)} trong tổng số {sortedData.length} bản ghi
+          Hiển thị {totalItems === 0 ? 0 : startIndex + 1} - {totalItems === 0 ? 0 : Math.min(startIndex + paginatedData.length, totalItems)} trong t?ng s? {totalItems} bản ghi
           {selectedIds.length > 0 && (
             <span className="ml-4 text-blue-600 font-bold">
               ({selectedIds.length} dòng được chọn)
@@ -284,8 +325,8 @@ export function PromotionTable({ data, onViewDetail }: PromotionTableProps) {
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                onClick={() => handlePageChange(Math.max(1, effectivePage - 1))}
+                className={!canPrev ? "pointer-events-none opacity-50" : "cursor-pointer"}
               />
             </PaginationItem>
             
@@ -294,20 +335,20 @@ export function PromotionTable({ data, onViewDetail }: PromotionTableProps) {
               if (
                 page === 1 ||
                 page === totalPages ||
-                (page >= currentPage - 1 && page <= currentPage + 1)
+                (page >= effectivePage - 1 && page <= effectivePage + 1)
               ) {
                 return (
                   <PaginationItem key={page}>
                     <PaginationLink
-                      onClick={() => setCurrentPage(page)}
-                      isActive={currentPage === page}
+                      onClick={() => handlePageChange(page)}
+                      isActive={effectivePage === page}
                       className="cursor-pointer"
                     >
                       {page}
                     </PaginationLink>
                   </PaginationItem>
                 );
-              } else if (page === currentPage - 2 || page === currentPage + 2) {
+              } else if (page === effectivePage - 2 || page === effectivePage + 2) {
                 return (
                   <PaginationItem key={page}>
                     <PaginationEllipsis />
@@ -319,8 +360,8 @@ export function PromotionTable({ data, onViewDetail }: PromotionTableProps) {
 
             <PaginationItem>
               <PaginationNext
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                onClick={() => handlePageChange(Math.min(totalPages, effectivePage + 1))}
+                className={!canNext ? "pointer-events-none opacity-50" : "cursor-pointer"}
               />
             </PaginationItem>
           </PaginationContent>
@@ -329,3 +370,5 @@ export function PromotionTable({ data, onViewDetail }: PromotionTableProps) {
     </div>
   );
 }
+
+
