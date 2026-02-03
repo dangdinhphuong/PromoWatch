@@ -10,6 +10,18 @@ import { AlertDialog } from "@/app/components/ui/alert-dialog";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
+const initialFilters = {
+  keyword: "",
+  applicableTimeRange: "all",
+  applicableStartDate: "",
+  applicableEndDate: "",
+  type: "all",
+  source: "all",
+  collectedTimeRange: "all",
+  collectedStartDate: "",
+  collectedEndDate: "",
+};
+
 export function PromotionsTablePage() {
   const [promotions, setPromotions] = useState<PromotionData[]>([]);
   const [page, setPage] = useState(1);
@@ -22,17 +34,9 @@ export function PromotionsTablePage() {
     hasNext: false,
     hasPrev: false,
   });
-  const [filters, setFilters] = useState({
-    keyword: "",
-    applicableTimeRange: "all",
-    applicableStartDate: "",
-    applicableEndDate: "",
-    type: "all",
-    source: "all",
-    collectedTimeRange: "all",
-    collectedStartDate: "",
-    collectedEndDate: "",
-  });
+  const [filters, setFilters] = useState(initialFilters);
+  const [appliedFilters, setAppliedFilters] = useState(initialFilters);
+  const [pendingToast, setPendingToast] = useState<string | null>(null);
 
   const [filteredData, setFilteredData] = useState<PromotionData[]>([]);
   const [selectedPromotion, setSelectedPromotion] = useState<PromotionData | null>(null);
@@ -42,13 +46,35 @@ export function PromotionsTablePage() {
   const displayData = filteredData;
 
   useEffect(() => {
-    let isActive = true;
+    const controller = new AbortController();
+
+    const buildQuery = (targetPage: number) => {
+      const params = new URLSearchParams();
+      params.set("page", String(targetPage));
+      params.set("limit", String(pageSize));
+
+      const addParam = (key: string, value: string) => {
+        if (!value || value === "all") return;
+        params.set(key, value);
+      };
+
+      addParam("keyword", appliedFilters.keyword.trim());
+      addParam("type", appliedFilters.type);
+      addParam("source", appliedFilters.source);
+      addParam("applicableStartDate", appliedFilters.applicableStartDate);
+      addParam("applicableEndDate", appliedFilters.applicableEndDate);
+      addParam("collectedStartDate", appliedFilters.collectedStartDate);
+      addParam("collectedEndDate", appliedFilters.collectedEndDate);
+
+      return params.toString();
+    };
 
     const loadPromotions = async () => {
       try {
-        const response = await fetch(
-          `/api/promotions/data?page=${page}&limit=${pageSize}`
-        );
+        const query = buildQuery(page);
+        const response = await fetch(`/api/promotions/data?${query}`, {
+          signal: controller.signal,
+        });
         if (!response.ok) {
           throw new Error(`Request failed: ${response.status}`);
         }
@@ -73,25 +99,33 @@ export function PromotionsTablePage() {
               hasPrev: false,
             };
 
-        if (isActive) {
-          setPromotions(data);
-          setFilteredData(data);
-          setPagination(nextPagination);
+        setPromotions(data);
+        setFilteredData(data);
+        setPagination(nextPagination);
+
+        if (pendingToast !== null) {
+          const suffix = pendingToast ? ` với ${pendingToast}` : "";
+          toast.success(`Tìm thấy ${nextPagination.total} kết quả${suffix}`);
+          setPendingToast(null);
         }
       } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
+        }
         console.error("Load promotions failed:", error);
-        if (isActive) {
-          setPromotions([]);
-          setFilteredData([]);
-          setPagination({
-            page,
-            pageSize,
-            total: 0,
-            totalPages: 0,
-            hasNext: false,
-            hasPrev: false,
-          });
-          toast.error("Khong tai duoc du lieu khuyen mai.");
+        setPromotions([]);
+        setFilteredData([]);
+        setPagination({
+          page,
+          pageSize,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        });
+        toast.error("Không tải được dữ liệu khuyến mãi.");
+        if (pendingToast !== null) {
+          setPendingToast(null);
         }
       }
     };
@@ -99,131 +133,35 @@ export function PromotionsTablePage() {
     loadPromotions();
 
     return () => {
-      isActive = false;
+      controller.abort();
     };
-  }, [page, pageSize]);
+  }, [page, pageSize, appliedFilters]);
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
-  const parseDate = (dateStr: string | null | undefined): Date | null => {
-    if (!dateStr) {
-      return null;
-    }
-    // Parse DD/MM/YYYY or YYYY-MM-DD format
-    if (dateStr.includes("/")) {
-      const [day, month, year] = dateStr.split("/");
-      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-      return Number.isNaN(date.getTime()) ? null : date;
-    }
-    const date = new Date(dateStr);
-    return Number.isNaN(date.getTime()) ? null : date;
-  };
-
-  const safeLower = (value: string | null | undefined) => (value ?? "").toLowerCase();
 
   const handleSearch = () => {
-    let filtered = [...promotions];
-
-    // 1. Filter by keyword (name, company, code)
-    if (filters.keyword.trim()) {
-      const keyword = filters.keyword.toLowerCase();
-      filtered = filtered.filter((item) => {
-        const name = safeLower(item.name);
-        const company = safeLower(item.company);
-        const code = safeLower(item.code);
-        return name.includes(keyword) || company.includes(keyword) || code.includes(keyword);
-      });
-    }
-
-    // 2. Filter by applicable time (time.start / time.end)
-    if (filters.applicableStartDate) {
-      const filterDate = new Date(filters.applicableStartDate);
-      filterDate.setHours(0, 0, 0, 0);
-      filtered = filtered.filter((item) => {
-        const itemStartDate = parseDate(item.time?.start);
-        if (!itemStartDate) return false;
-        itemStartDate.setHours(0, 0, 0, 0);
-        return itemStartDate >= filterDate;
-      });
-    }
-
-    if (filters.applicableEndDate) {
-      const filterDate = new Date(filters.applicableEndDate);
-      filterDate.setHours(23, 59, 59, 999);
-      filtered = filtered.filter((item) => {
-        const itemEndDate = parseDate(item.time?.end);
-        if (!itemEndDate) return false;
-        itemEndDate.setHours(23, 59, 59, 999);
-        return itemEndDate <= filterDate;
-      });
-    }
-
-    // 3. Filter by type (official/unofficial)
+    const filterInfo: string[] = [];
+    if (filters.keyword.trim()) filterInfo.push(`từ khóa "${filters.keyword.trim()}"`);
     if (filters.type !== "all") {
-      filtered = filtered.filter((item) => item.type === filters.type);
+      filterInfo.push(
+        `loại ${filters.type === "official" ? "chính thức" : "không chính thức"}`
+      );
     }
-
-    // 4. Filter by source
-    if (filters.source !== "all") {
-      filtered = filtered.filter((item) => item.source === filters.source);
-    }
-
-    // 5. Filter by collected time (crawledAt)
-    if (filters.collectedStartDate) {
-      const filterDate = new Date(filters.collectedStartDate);
-      filterDate.setHours(0, 0, 0, 0);
-      filtered = filtered.filter((item) => {
-        if (!item.crawledAt) return false;
-        const itemDate = new Date(item.crawledAt);
-        itemDate.setHours(0, 0, 0, 0);
-        return itemDate >= filterDate;
-      });
-    }
-
-    if (filters.collectedEndDate) {
-      const filterDate = new Date(filters.collectedEndDate);
-      filterDate.setHours(23, 59, 59, 999);
-      filtered = filtered.filter((item) => {
-        if (!item.crawledAt) return false;
-        const itemDate = new Date(item.crawledAt);
-        itemDate.setHours(23, 59, 59, 999);
-        return itemDate <= filterDate;
-      });
-    }
-
-    setFilteredData(filtered);
-    
-    // Show detailed filter info
-    const filterInfo = [];
-    if (filters.keyword) filterInfo.push(`từ khóa "${filters.keyword}"`);
-    if (filters.type !== "all") filterInfo.push(`loại ${filters.type === "official" ? "chính thức" : "không chính thức"}`);
     if (filters.source !== "all") filterInfo.push(`nguồn ${filters.source}`);
-    
-    if (filterInfo.length > 0) {
-      toast.success(`Tìm thấy ${filtered.length} kết quả với ${filterInfo.join(", ")}`);
-    } else {
-      toast.success(`Tìm thấy ${filtered.length} kết quả`);
-    }
-  };
 
+    setPendingToast(filterInfo.join(", "));
+    setPage(1);
+    setAppliedFilters({ ...filters });
+  };
   const handleReset = () => {
-    setFilters({
-      keyword: "",
-      applicableTimeRange: "all",
-      applicableStartDate: "",
-      applicableEndDate: "",
-      type: "all",
-      source: "all",
-      collectedTimeRange: "all",
-      collectedStartDate: "",
-      collectedEndDate: "",
-    });
-    setFilteredData(promotions);
+    setFilters({ ...initialFilters });
+    setAppliedFilters({ ...initialFilters });
+    setPage(1);
     toast.info("Đã reset bộ lọc");
   };
-
   const handleExport = () => {
     setIsExportDialogOpen(true);
   };
@@ -300,15 +238,7 @@ export function PromotionsTablePage() {
     setSelectedPromotion(null);
   };
 
-  const hasActiveFilters =
-    filters.keyword.trim().length > 0 ||
-    filters.applicableStartDate ||
-    filters.applicableEndDate ||
-    filters.type !== "all" ||
-    filters.source !== "all" ||
-    filters.collectedStartDate ||
-    filters.collectedEndDate;
-  const tablePagination = hasActiveFilters ? undefined : pagination;
+  const tablePagination = pagination;
 
   return (
     <div className="p-6">

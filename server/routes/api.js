@@ -89,11 +89,106 @@ router.get("/promotions/data", async (req, res) => {
     const filePath = path.resolve("data", "promotions", "data.json");
     const raw = await readFile(filePath, "utf8");
     const parsed = raw.trim() ? JSON.parse(raw) : [];
-    const data = Array.isArray(parsed)
+    const allData = Array.isArray(parsed)
       ? parsed
       : parsed && Array.isArray(parsed.promotions)
       ? parsed.promotions
       : [];
+
+    const normalizeString = (value) =>
+      typeof value === "string" ? value.trim() : "";
+
+    const parseDateValue = (value) => {
+      const rawValue = normalizeString(value);
+      if (!rawValue) return null;
+      if (rawValue.includes("/")) {
+        const parts = rawValue.split("/");
+        if (parts.length === 3) {
+          const [day, month, year] = parts;
+          const date = new Date(
+            Number.parseInt(year, 10),
+            Number.parseInt(month, 10) - 1,
+            Number.parseInt(day, 10)
+          );
+          return Number.isNaN(date.getTime()) ? null : date;
+        }
+      }
+      const date = new Date(rawValue);
+      return Number.isNaN(date.getTime()) ? null : date;
+    };
+
+    const keyword = normalizeString(req.query.keyword).toLowerCase();
+    const type = normalizeString(req.query.type);
+    const source = normalizeString(req.query.source);
+
+    const applicableStartDate = parseDateValue(req.query.applicableStartDate);
+    const applicableEndDate = parseDateValue(req.query.applicableEndDate);
+    const collectedStartDate = parseDateValue(req.query.collectedStartDate);
+    const collectedEndDate = parseDateValue(req.query.collectedEndDate);
+
+    if (applicableStartDate) {
+      applicableStartDate.setHours(0, 0, 0, 0);
+    }
+    if (applicableEndDate) {
+      applicableEndDate.setHours(23, 59, 59, 999);
+    }
+    if (collectedStartDate) {
+      collectedStartDate.setHours(0, 0, 0, 0);
+    }
+    if (collectedEndDate) {
+      collectedEndDate.setHours(23, 59, 59, 999);
+    }
+
+    const data = allData.filter((item) => {
+      if (!item) return false;
+
+      if (keyword) {
+        const name = normalizeString(item.name).toLowerCase();
+        const company = normalizeString(item.company).toLowerCase();
+        const code = normalizeString(item.code).toLowerCase();
+        if (!name.includes(keyword) && !company.includes(keyword) && !code.includes(keyword)) {
+          return false;
+        }
+      }
+
+      if (type && type !== "all" && item.type !== type) {
+        return false;
+      }
+
+      if (source && source !== "all" && item.source !== source) {
+        return false;
+      }
+
+      if (applicableStartDate) {
+        const itemStart = parseDateValue(item.time && item.time.start);
+        if (!itemStart || itemStart < applicableStartDate) {
+          return false;
+        }
+      }
+
+      if (applicableEndDate) {
+        const itemEnd = parseDateValue(item.time && item.time.end);
+        if (!itemEnd || itemEnd > applicableEndDate) {
+          return false;
+        }
+      }
+
+      if (collectedStartDate) {
+        const itemCollected = parseDateValue(item.crawledAt);
+        if (!itemCollected || itemCollected < collectedStartDate) {
+          return false;
+        }
+      }
+
+      if (collectedEndDate) {
+        const itemCollected = parseDateValue(item.crawledAt);
+        if (!itemCollected || itemCollected > collectedEndDate) {
+          return false;
+        }
+      }
+
+      return true;
+    });
 
     const pageParam = req.query.page;
     const pageSizeParam = req.query.pageSize ?? req.query.limit;
