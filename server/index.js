@@ -1,5 +1,7 @@
 import dns from "dns";
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import apiRouter from "./routes/api.js";
 import { config } from "./config.js";
 import { startCron } from "./cron.js";
@@ -7,9 +9,21 @@ import { startCron } from "./cron.js";
 dns.setDefaultResultOrder("ipv4first");
 
 const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const distDir = path.resolve(__dirname, "..", "dist");
 
 app.use(express.json({ limit: "1mb" }));
 app.use("/api", apiRouter);
+
+// Serve built frontend (Vite dist) when available
+app.use(express.static(distDir));
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api")) {
+    return next();
+  }
+  res.sendFile(path.join(distDir, "index.html"));
+});
 
 app.use((err, req, res, next) => {
   const status = err.status || 500;
