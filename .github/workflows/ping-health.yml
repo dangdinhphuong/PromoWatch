@@ -13,7 +13,9 @@ jobs:
       PING_UNTIL: "2026-02-06T00:00:00Z"
     steps:
       - name: Debug trigger
-        run: echo "Triggered by: $GITHUB_EVENT_NAME at $(date -u)"
+        shell: bash
+        run: |
+          echo "Triggered by: $GITHUB_EVENT_NAME at $(date -u)"
 
       - name: Ping health endpoint
         shell: bash
