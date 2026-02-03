@@ -485,7 +485,7 @@ export function DiscountCodesPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Filter Section */}
       <div className="px-6 pt-6 pb-4">
-        <div className="bg-white rounded-[14px] border border-gray-200 shadow-md p-[17px] max-w-[1631px]">
+        <div className="bg-white rounded-[14px] border border-gray-200 shadow-md p-[17px]">
           <div className="flex gap-6 items-center">
             {/* Platform Dropdown */}
             <div className="w-64 flex flex-col gap-3">
@@ -679,26 +679,24 @@ export function DiscountCodesPage() {
 
       {/* Load More Button */}
       {!loadingVouchers && vouchers.length > 0 && hasMore && (
-        <div className="px-6 pb-6">
-          <div className="max-w-[1631px]">
-            <button
-              onClick={handleLoadMore}
-              disabled={loadingMore}
-              className="w-full h-12 bg-white border-2 border-green-600 rounded-lg flex items-center justify-center gap-2 hover:bg-green-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loadingMore ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-sm font-bold text-green-700">Đang tải...</span>
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="w-5 h-5 text-green-600" />
-                  <span className="text-sm font-bold text-green-600">Xem thêm</span>
-                </>
-              )}
-            </button>
-          </div>
+        <div className="px-6 pb-6 flex justify-center">
+          <button
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+            className="max-w-xs h-10 px-8 bg-white border-2 border-green-600 rounded-lg flex items-center justify-center gap-2 hover:bg-green-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loadingMore ? (
+              <>
+                <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-sm font-bold text-green-700">Đang tải...</span>
+              </>
+            ) : (
+              <>
+                <ChevronDown className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-bold text-green-600">Xem thêm</span>
+              </>
+            )}
+          </button>
         </div>
       )}
 

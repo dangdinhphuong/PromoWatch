@@ -4,10 +4,12 @@ import { PageLayout } from "@/app/components/page-layout";
 import { PromotionsTablePage } from "@/app/pages/promotions-table";
 import { DiscountCodesPage } from "@/app/pages/discount-codes";
 import { MappaStylePage } from "@/app/pages/mappa-style";
+import { PriceManagementModule } from "@/app/pages/price-management";
+import { EcommerceViolationModule } from "@/app/pages/ecommerce-violation";
 import { Toaster } from "sonner";
 
 function App() {
-  const [activePage, setActivePage] = useState<"promotions" | "discount-codes" | "overview">("overview");
+  const [activePage, setActivePage] = useState<"promotions" | "discount-codes" | "overview" | "price-management" | "ecommerce-violation">("overview");
 
   const handleScrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -35,7 +37,7 @@ function App() {
         >
           <PromotionsTablePage />
         </PageLayout>
-      ) : (
+      ) : activePage === "discount-codes" ? (
         <PageLayout 
           pageTitle="Trung tâm Khuyến mãi" 
           sectionTitle="Quản lý mã giảm giá"
@@ -43,6 +45,10 @@ function App() {
         >
           <DiscountCodesPage />
         </PageLayout>
+      ) : activePage === "price-management" ? (
+        <PriceManagementModule onBack={() => setActivePage("overview")} />
+      ) : (
+        <EcommerceViolationModule onBack={() => setActivePage("overview")} />
       )}
     </>
   );

@@ -2543,7 +2543,7 @@ const mockPromotions: PromotionData[] = [
       "start": "2025-12-14",
       "end": "2026-01-31"
     },
-    "location": "Tỉnh Vĩnh Long, tỉnh Quảng Trị, thành phố Hồ Chí Minh, tỉnh Đồng Nai",
+    "location": "Tỉnh Vĩnh Long, tỉnh Qu��ng Trị, thành phố Hồ Chí Minh, tỉnh Đồng Nai",
     "productType": "Sản phẩm hỗn hợp Vitamin, khoáng hữu cơ, chất điện giải, và Acid Amin, ho gia súc, gia cầm (VitaGrow+)",
     "discountPercent": null,
     "promotionMethod": "Tổ chức khách hàng thường xuyên",
@@ -3108,14 +3108,15 @@ const mockPromotions: PromotionData[] = [
 ];
 export function PromotionsPage() {
   const [filters, setFilters] = useState({
+    keyword: "",
+    applicableTimeRange: "all",
+    applicableStartDate: "",
+    applicableEndDate: "",
     type: "all",
     source: "all",
-    startDate: "",
-    endDate: "",
-    location: "",
-    company: "",
-    productType: "",
-    discountRange: [0, 100],
+    collectedTimeRange: "all",
+    collectedStartDate: "",
+    collectedEndDate: "",
   });
 
   const [filteredData, setFilteredData] = useState<PromotionData[]>(mockPromotions);
@@ -3131,6 +3132,18 @@ export function PromotionsPage() {
   const handleSearch = () => {
     let filtered = [...mockPromotions];
 
+    // Filter by keyword (search in name, company, code)
+    if (filters.keyword) {
+      filtered = filtered.filter((item) => {
+        const searchText = filters.keyword.toLowerCase();
+        return (
+          item.name?.toLowerCase().includes(searchText) ||
+          item.company?.toLowerCase().includes(searchText) ||
+          item.code?.toLowerCase().includes(searchText)
+        );
+      });
+    }
+
     // Filter by type
     if (filters.type !== "all") {
       filtered = filtered.filter((item) => item.type === filters.type);
@@ -3141,53 +3154,44 @@ export function PromotionsPage() {
       filtered = filtered.filter((item) => item.source === filters.source);
     }
 
-    // Filter by date range
-    if (filters.startDate) {
+    // Filter by applicable date range (time.start and time.end)
+    if (filters.applicableStartDate) {
       filtered = filtered.filter((item) => {
         if (!item.time.start) return false;
-        const itemDate = new Date(item.time.start.split("/").reverse().join("-"));
-        const filterDate = new Date(filters.startDate);
+        const itemDate = new Date(item.time.start);
+        const filterDate = new Date(filters.applicableStartDate);
         return itemDate >= filterDate;
       });
     }
 
-    if (filters.endDate) {
+    if (filters.applicableEndDate) {
       filtered = filtered.filter((item) => {
         if (!item.time.end) return false;
-        const itemDate = new Date(item.time.end.split("/").reverse().join("-"));
-        const filterDate = new Date(filters.endDate);
+        const itemDate = new Date(item.time.end);
+        const filterDate = new Date(filters.applicableEndDate);
         return itemDate <= filterDate;
       });
     }
 
-    // Filter by location
-    if (filters.location) {
-      filtered = filtered.filter((item) =>
-        item.location?.toLowerCase().includes(filters.location.toLowerCase())
-      );
+    // Filter by collected date range (crawledAt)
+    if (filters.collectedStartDate) {
+      filtered = filtered.filter((item) => {
+        if (!item.crawledAt) return false;
+        const itemDate = new Date(item.crawledAt);
+        const filterDate = new Date(filters.collectedStartDate);
+        return itemDate >= filterDate;
+      });
     }
 
-    // Filter by company
-    if (filters.company) {
-      filtered = filtered.filter((item) =>
-        item.company.toLowerCase().includes(filters.company.toLowerCase())
-      );
+    if (filters.collectedEndDate) {
+      filtered = filtered.filter((item) => {
+        if (!item.crawledAt) return false;
+        const itemDate = new Date(item.crawledAt);
+        const filterDate = new Date(filters.collectedEndDate);
+        filterDate.setHours(23, 59, 59, 999); // End of day
+        return itemDate <= filterDate;
+      });
     }
-
-    // Filter by product type
-    if (filters.productType) {
-      filtered = filtered.filter((item) =>
-        item.productType?.toLowerCase().includes(filters.productType.toLowerCase())
-      );
-    }
-
-    // Filter by discount range (only if discountPercent exists)
-    filtered = filtered.filter(
-      (item) =>
-        item.discountPercent === null ||
-        (item.discountPercent >= filters.discountRange[0] &&
-          item.discountPercent <= filters.discountRange[1])
-    );
 
     setFilteredData(filtered);
     toast.success(`Tìm thấy ${filtered.length} kết quả phù hợp`);
@@ -3195,14 +3199,15 @@ export function PromotionsPage() {
 
   const handleReset = () => {
     setFilters({
+      keyword: "",
+      applicableTimeRange: "all",
+      applicableStartDate: "",
+      applicableEndDate: "",
       type: "all",
       source: "all",
-      startDate: "",
-      endDate: "",
-      location: "",
-      company: "",
-      productType: "",
-      discountRange: [0, 100],
+      collectedTimeRange: "all",
+      collectedStartDate: "",
+      collectedEndDate: "",
     });
     setFilteredData(mockPromotions);
     toast.info("Đã reset bộ lọc");

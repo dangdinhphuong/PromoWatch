@@ -24,8 +24,8 @@ export function Layout({ children, activePage, onPageChange, onScrollToSection }
     <div className="min-h-screen bg-gray-50">
       <PageHeader onNavigate={handleHeaderNavigate} onScrollToSection={handleScrollToSection} />
       
-      {/* Main Content */}
-      <main>{children}</main>
+      {/* Main Content with top padding for fixed header */}
+      <main className="pt-16">{children}</main>
     </div>
   );
 }

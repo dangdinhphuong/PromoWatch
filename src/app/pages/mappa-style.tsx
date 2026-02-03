@@ -1,6 +1,5 @@
-import { Megaphone, Ticket, Bell, Clipboard, MapPin, BarChart3, ChevronRight, CheckCircle2, Database, TrendingUp, Clock } from "lucide-react";
+import { Megaphone, Ticket, Database, ShieldAlert, TrendingUp, Users, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
-import { Counter } from "@/app/components/counter";
 
 interface FeatureCard {
   id: string;
@@ -10,11 +9,11 @@ interface FeatureCard {
   subtitle: string;
   description: string;
   link: string;
-  page?: "promotions" | "discount-codes" | "overview";
+  page?: "promotions" | "discount-codes" | "overview" | "price-management" | "ecommerce-violation";
 }
 
 interface MappaStylePageProps {
-  onNavigate: (page: "promotions" | "discount-codes" | "overview") => void;
+  onNavigate: (page: "promotions" | "discount-codes" | "overview" | "price-management" | "ecommerce-violation") => void;
 }
 
 const features: FeatureCard[] = [
@@ -24,7 +23,7 @@ const features: FeatureCard[] = [
     iconBg: "bg-blue-100 text-blue-600",
     title: "Tin Khuyến Mãi",
     subtitle: "Trung tâm Khuyến mãi AI",
-    description: "AI thu thập – phân loại – phát hiện xu hướng khuyến mãi bất thường",
+    description: "Thu thập – phân loại – phát hiện bất thường",
     link: "#",
     page: "promotions"
   },
@@ -34,44 +33,46 @@ const features: FeatureCard[] = [
     iconBg: "bg-cyan-100 text-cyan-600",
     title: "Mã Giảm Giá",
     subtitle: "Kho Voucher",
-    description: "AI phân tích điều kiện áp dụng, phát hiện mã rủi ro / gian lận",
+    description: "Phân tích điều kiện – phát hiện mã rủi ro",
     link: "#",
     page: "discount-codes"
   },
   {
     id: "alerts",
-    icon: <Bell className="w-6 h-6" />,
+    icon: <Database className="w-6 h-6" />,
     iconBg: "bg-purple-100 text-purple-600",
-    title: "Cảnh báo & Giám sát",
-    subtitle: "Trung tâm Giám sát AI",
-    description: "AI phát hiện giá bất thường, hành vi gian lận, cảnh báo sớm",
+    title: "Chuẩn hóa & Tích hợp Dữ liệu",
+    subtitle: "Trung tâm ETL & Geocoding",
+    description: "Import Excel – ánh xạ tọa độ – chuẩn hóa format",
     link: "#"
   },
   {
     id: "planning",
-    icon: <Clipboard className="w-6 h-6" />,
+    icon: <ShieldAlert className="w-6 h-6" />,
     iconBg: "bg-teal-100 text-teal-600",
-    title: "Hệ thống Phân công & Theo dõi",
-    subtitle: "Trung tâm Điều hành",
-    description: "AI gợi ý phân công, ưu tiên vụ việc, theo dõi tiến độ xử lý",
-    link: "#"
+    title: "Kiểm soát hành vi vi phạm trên TMĐT/nền tảng số",
+    subtitle: "Trung tâm Điều hành Giám sát",
+    description: "Phát hiện vi phạm – cảnh báo rủi ro – xử lý tập trung",
+    link: "#",
+    page: "ecommerce-violation"
   },
   {
     id: "storage",
-    icon: <MapPin className="w-6 h-6" />,
+    icon: <TrendingUp className="w-6 h-6" />,
     iconBg: "bg-orange-100 text-orange-600",
-    title: "Trung tâm Điều hành Không gian",
-    subtitle: "Nền tảng Bản đồ",
-    description: "Nền tảng bản đồ tổng hợp dữ liệu thị trường theo không gian và thời gian. Hỗ trợ giám sát đa lớp, phân tích điểm nóng, theo dõi địa bàn và truy cập nhanh thông tin chi tiết phục vụ điều hành.",
-    link: "#"
+    title: "Quản lý nhà nước về giá & theo dõi/bình ổn",
+    subtitle: "Trong phạm vi Bộ Công Thương",
+    description: "Giám sát biến động giá – phát hiện bất thường – bình ổn thị trường",
+    link: "#",
+    page: "price-management"
   },
   {
     id: "reports",
-    icon: <BarChart3 className="w-6 h-6" />,
+    icon: <Users className="w-6 h-6" />,
     iconBg: "bg-pink-100 text-pink-600",
-    title: "Báo cáo & Thống kê",
-    subtitle: "Trung tâm Phân tích Dữ liệu",
-    description: "AI phân tích xu hướng, dự báo rủi ro, hỗ trợ quyết định",
+    title: "Phối hợp liên ngành",
+    subtitle: "Công an, Hải quan, Biên phòng, BCĐ 389",
+    description: "Kết nối đa ngành – chia sẻ thông tin – điều phối tác chiến",
     link: "#"
   }
 ];
@@ -79,108 +80,10 @@ const features: FeatureCard[] = [
 export function MappaStylePage({ onNavigate }: MappaStylePageProps) {
   return (
     <div className="bg-gray-50 min-h-screen">
-      {/* Overview Section - Giới thiệu */}
-      <section id="overview-section" className="bg-white border-b border-gray-200">
-        <div className="max-w-[1200px] mx-auto px-6 py-16">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left Column - Giải pháp toàn diện */}
-            <div>
-              <div className="inline-block bg-blue-50 text-blue-600 px-4 py-2 rounded-full text-sm font-medium mb-6">
-                Giải pháp toàn diện
-              </div>
-              
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                Tại sao cần MAPPA?
-              </h2>
-
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-blue-600 mt-1 shrink-0" />
-                  <p className="text-gray-700">Phân tích xu hướng thị trường tự động</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-blue-600 mt-1 shrink-0" />
-                  <p className="text-gray-700">Cảnh báo sớm vi phạm bằng AI</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-blue-600 mt-1 shrink-0" />
-                  <p className="text-gray-700">Truy vết nguồn gốc đa nền tảng</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column - Statistics */}
-            <div className="bg-gradient-to-br from-blue-50 to-white border border-gray-200 rounded-2xl p-8">
-              <div className="grid grid-cols-2 gap-6">
-                {/* Khu địa bàn */}
-                <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                  <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mb-4 mx-auto">
-                    <MapPin className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="text-3xl font-bold text-gray-900 text-center mb-1">
-                    <Counter end={63} duration={2000} />/<Counter end={63} duration={2000} />
-                  </div>
-                  <div className="text-sm text-gray-500 text-center">Khu địa bàn</div>
-                </div>
-
-                {/* Cơ sở quản lý */}
-                <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                  <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mb-4 mx-auto">
-                    <Database className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div className="text-3xl font-bold text-gray-900 text-center mb-1">
-                    <Counter end={1.2} decimals={1} suffix="M+" duration={2000} />
-                  </div>
-                  <div className="text-sm text-gray-500 text-center">Cơ sở quản lý</div>
-                </div>
-
-                {/* Nguồn tin số ly thừng */}
-                <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                  <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg mb-4 mx-auto">
-                    <TrendingUp className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div className="text-3xl font-bold text-gray-900 text-center mb-1">
-                    <Counter end={25} suffix="K+" duration={2000} />
-                  </div>
-                  <div className="text-sm text-gray-500 text-center">Nguồn tin số ly thừng</div>
-                </div>
-
-                {/* SLA xử lý */}
-                <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                  <div className="flex items-center justify-center w-12 h-12 bg-orange-100 rounded-lg mb-4 mx-auto">
-                    <Clock className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <div className="text-3xl font-bold text-gray-900 text-center mb-1">
-                    <Counter end={48} suffix="h" duration={2000} />
-                  </div>
-                  <div className="text-sm text-gray-500 text-center">SLA xử lý</div>
-                </div>
-              </div>
-
-              {/* Note */}
-              <div className="mt-6 text-center">
-                <p className="text-xs text-gray-500 italic">
-                  Số liệu minh họa – sử dụng đúng số liệu đầu vào khai thác nội bộ
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Platform Section - Nền tảng & Lợi ích */}
       <section id="platform-section" className="bg-gray-50">
         <div className="bg-white border-b border-gray-200 pt-12">
           <div className="max-w-[1200px] mx-auto px-6 pb-12 text-center">
-            {/* Breadcrumb */}
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mb-4">
-              <span className="hover:text-blue-600 transition-colors cursor-pointer">
-                Khả năng nền tảng
-              </span>
-              <ChevronRight className="w-4 h-4" />
-              <span className="text-gray-900 font-medium">Chức năng & Ứng dụng</span>
-            </div>
-
             {/* Badge */}
             <div className="inline-block bg-blue-50 text-blue-600 px-4 py-2 rounded-full text-sm font-medium mb-4">
               Giám sát đa nền tảng
@@ -193,7 +96,7 @@ export function MappaStylePage({ onNavigate }: MappaStylePageProps) {
 
             {/* Description */}
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Hệ thống giám sát và phân tích khuyến mại trên các nền tảng thương mại điện tử trọng điểm, cho phép thu thập dữ liệu, phân tích hành vi và cảnh báo sớm các chương trình có dấu hiệu vi phạm, hỗ trợ công tác quản lý và điều hành tập trung.
+              Giám sát đa nền tảng – Thu thập dữ liệu – Phát hiện vi phạm – Điều hành tập trung
             </p>
           </div>
         </div>
@@ -204,15 +107,15 @@ export function MappaStylePage({ onNavigate }: MappaStylePageProps) {
             {features.map((feature) => (
               <div
                 key={feature.id}
-                className="bg-white rounded-2xl p-8 border border-gray-200 hover:shadow-lg transition-all duration-200 group"
+                className="bg-white rounded-2xl p-8 border border-gray-200 hover:shadow-2xl hover:border-blue-300 hover:-translate-y-2 transition-all duration-300 ease-out group cursor-pointer"
               >
                 {/* Icon */}
-                <div className={`w-14 h-14 rounded-xl ${feature.iconBg} flex items-center justify-center mb-5`}>
+                <div className={`w-14 h-14 rounded-xl ${feature.iconBg} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
                   {feature.icon}
                 </div>
 
                 {/* Title */}
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors duration-300">
                   {feature.title}
                 </h3>
 
@@ -238,10 +141,10 @@ export function MappaStylePage({ onNavigate }: MappaStylePageProps) {
                       });
                     }
                   }}
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors group-hover:gap-3 duration-200"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-all duration-300 group-hover:gap-3"
                 >
                   Xem chi tiết
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
                 </button>
               </div>
             ))}

@@ -6,16 +6,17 @@ interface PageLayoutProps {
   pageTitle?: string;
   sectionTitle?: string;
   onNavigate?: (page: "overview" | "promotions" | "discount-codes") => void;
+  onNavigateToHome?: () => void;
 }
 
-export function PageLayout({ children, pageTitle, sectionTitle, onNavigate }: PageLayoutProps) {
+export function PageLayout({ children, pageTitle, sectionTitle, onNavigate, onNavigateToHome }: PageLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50">
-      <PageHeader onNavigate={onNavigate} />
+      <PageHeader onNavigate={onNavigate} onNavigateToHome={onNavigateToHome} />
       
-      {/* Page Title Section */}
+      {/* Page Title Section with top padding for fixed header */}
       {pageTitle && (
-        <div className="bg-white border-b border-gray-200">
+        <div className="bg-white border-b border-gray-200 mt-16">
           <div className="px-8 py-4">
             <h1 className="text-xl font-bold text-gray-900">{pageTitle}</h1>
             {sectionTitle && (
@@ -26,7 +27,7 @@ export function PageLayout({ children, pageTitle, sectionTitle, onNavigate }: Pa
       )}
       
       {/* Main Content */}
-      <div className="w-full">
+      <div className={`w-full ${!pageTitle ? 'mt-16' : ''}`}>
         {children}
       </div>
     </div>
