@@ -12,17 +12,28 @@ jobs:
       HEALTH_URL: "https://promowatch.onrender.com/health"
       PING_UNTIL: "2026-02-06T00:00:00Z"
     steps:
+      - name: Debug trigger
+        run: echo "Triggered by: $GITHUB_EVENT_NAME at $(date -u)"
+
       - name: Ping health endpoint
+        shell: bash
         run: |
+          set -euo pipefail
+
           now=$(date -u +%s)
           end=$(date -u -d "$PING_UNTIL" +%s)
+
           if [ "$now" -gt "$end" ]; then
             echo "Ping window ended: $PING_UNTIL"
             exit 0
           fi
+
           echo "Pinging $HEALTH_URL"
-          resp=$(curl -fsS "$HEALTH_URL")
+          resp=$(curl -fsS --max-time 15 --retry 3 --retry-delay 2 --retry-all-errors "$HEALTH_URL")
+
           if [ "$resp" != "ok" ]; then
             echo "Unexpected response: $resp"
             exit 1
           fi
+
+          echo "OK"
