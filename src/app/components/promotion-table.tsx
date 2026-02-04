@@ -244,7 +244,6 @@ export function PromotionTable({
                 Thời gian áp dụng <SortIcon field="time" />
               </TableHead>
               <TableHead className="min-w-[180px] max-w-[180px] p-3 text-sm font-bold whitespace-normal">Địa điểm</TableHead>
-              <TableHead className="min-w-[180px] max-w-[180px] p-3 text-sm font-bold whitespace-normal">Loại mặt hàng</TableHead>
               <TableHead className="w-[120px] p-3 text-sm font-bold whitespace-nowrap">Nguồn</TableHead>
               <TableHead className="w-[110px] p-3 text-sm font-bold whitespace-nowrap">Pháp lý</TableHead>
               <TableHead 
@@ -291,13 +290,6 @@ export function PromotionTable({
                     >
                       {formatLocation(item.location)}
                     </span>
-                  ) : (
-                    <span className="text-gray-400 text-sm">N/A</span>
-                  )}
-                </TableCell>
-                <TableCell className="min-w-[180px] max-w-[180px] p-3 whitespace-normal">
-                  {item.productType ? (
-                    <span className="text-sm font-medium text-gray-800 break-words leading-relaxed">{item.productType}</span>
                   ) : (
                     <span className="text-gray-400 text-sm">N/A</span>
                   )}
@@ -384,3 +376,5 @@ export function PromotionTable({
     </div>
   );
 }
+
+
