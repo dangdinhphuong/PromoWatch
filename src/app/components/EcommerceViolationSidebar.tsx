@@ -1,4 +1,4 @@
-import { LayoutDashboard, FolderOpen, Search, AlertTriangle, Video, FileText } from "lucide-react";
+import { LayoutDashboard, FolderOpen, Search, AlertTriangle, Video, FileText, X } from "lucide-react";
 
 type PageType = "overview" | "categories" | "detection" | "risk-alert" | "livestream" | "violation-log";
 
@@ -13,6 +13,8 @@ interface MenuItem {
 interface EcommerceViolationSidebarProps {
   activePage: PageType;
   onNavigate: (page: PageType) => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 const menuItems: MenuItem[] = [
@@ -60,50 +62,80 @@ const menuItems: MenuItem[] = [
   },
 ];
 
-export function EcommerceViolationSidebar({ activePage, onNavigate }: EcommerceViolationSidebarProps) {
+export function EcommerceViolationSidebar({ activePage, onNavigate, isOpen = true, onClose }: EcommerceViolationSidebarProps) {
+  const handleNavigate = (page: PageType) => {
+    onNavigate(page);
+    onClose?.(); // Close mobile drawer after navigation
+  };
+
   return (
-    <div className="w-[280px] bg-white border-r border-gray-200 h-[calc(100vh-64px)] pt-6 px-4 sticky top-16 overflow-y-auto">
-      {/* Header */}
-      <div className="mb-6 px-2">
-        <h2 className="text-sm font-semibold text-gray-900 mb-1">Các chức năng</h2>
-        <p className="text-xs text-gray-500">Kiểm soát vi phạm TMĐT</p>
-      </div>
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+          onClick={onClose}
+        />
+      )}
 
-      {/* Menu Items */}
-      <div className="space-y-2">
-        {menuItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onNavigate(item.id)}
-            className={`w-full text-left p-3 rounded-lg transition-all hover:bg-gray-50 ${
-              activePage === item.id
-                ? "bg-blue-50 border-2 border-blue-500 shadow-sm"
-                : "border-2 border-transparent hover:border-gray-200"
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              {/* Icon */}
-              <div className={`${item.iconBg} rounded-lg p-2 flex-shrink-0`}>
-                {item.icon}
-              </div>
+      {/* Sidebar */}
+      <div className={`
+        fixed lg:sticky top-14 lg:top-16 left-0 z-40 lg:z-0
+        w-[280px] bg-white border-r border-gray-200 
+        h-[calc(100vh-56px)] lg:h-[calc(100vh-64px)] pt-4 lg:pt-6 px-4 overflow-y-auto
+        transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
+        {/* Close button - Mobile only */}
+        <button
+          onClick={onClose}
+          className="lg:hidden absolute top-2 right-2 p-2 hover:bg-gray-100 rounded-full transition-colors"
+        >
+          <X className="w-5 h-5 text-gray-600" />
+        </button>
 
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <h3
-                  className={`text-sm font-semibold mb-0.5 ${
-                    activePage === item.id ? "text-blue-900" : "text-gray-900"
-                  }`}
-                >
-                  {item.title}
-                </h3>
-                <p className="text-xs text-gray-500 line-clamp-2">
-                  {item.description}
-                </p>
+        {/* Header */}
+        <div className="mb-4 lg:mb-6 px-2 pt-2 lg:pt-0">
+          <h2 className="text-sm font-semibold text-gray-900 mb-1">Các chức năng</h2>
+          <p className="text-xs text-gray-500">Kiểm soát vi phạm TMĐT</p>
+        </div>
+
+        {/* Menu Items */}
+        <div className="space-y-2 pb-20 lg:pb-4">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => handleNavigate(item.id)}
+              className={`w-full text-left p-3 rounded-lg transition-all hover:bg-gray-50 ${
+                activePage === item.id
+                  ? "bg-blue-50 border-2 border-blue-500 shadow-sm"
+                  : "border-2 border-transparent hover:border-gray-200"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                {/* Icon */}
+                <div className={`${item.iconBg} rounded-lg p-2 flex-shrink-0`}>
+                  {item.icon}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <h3
+                    className={`text-sm font-semibold mb-0.5 ${
+                      activePage === item.id ? "text-blue-900" : "text-gray-900"
+                    }`}
+                  >
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-gray-500 line-clamp-2">
+                    {item.description}
+                  </p>
+                </div>
               </div>
-            </div>
-          </button>
-        ))}
+            </button>
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

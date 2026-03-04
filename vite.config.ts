@@ -18,6 +18,11 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      "/api/piggi": {
+        target: "https://portal.piggi.vn",
+        changeOrigin: true,
+        rewrite: (requestPath) => requestPath.replace(/^\/api\/piggi/, "/api"),
+      },
       "/api": "http://localhost:4000",
     },
   },

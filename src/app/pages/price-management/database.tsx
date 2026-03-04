@@ -125,17 +125,17 @@ export function PriceDatabase() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
       <div className="w-full">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Cơ sở dữ liệu giá tập trung</h1>
-          <p className="text-gray-600">Dữ liệu giá từ địa phương, doanh nghiệp và thị trường</p>
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Cơ sở dữ liệu giá tập trung</h1>
+          <p className="text-sm sm:text-base text-gray-600">Dữ liệu giá từ địa phương, doanh nghiệp và thị trường</p>
         </div>
 
         {/* Filter Panel */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4 mb-4 sm:mb-6 shadow-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4">
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">Mặt hàng</label>
               <Select defaultValue="all">
@@ -219,7 +219,8 @@ export function PriceDatabase() {
 
         {/* Price Records Table */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -304,23 +305,72 @@ export function PriceDatabase() {
             </table>
           </div>
 
+          {/* Mobile Card View */}
+          <div className="lg:hidden divide-y divide-gray-200">
+            {mockPriceData.map((record) => (
+              <div key={record.id} className="p-4 hover:bg-gray-50">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <h3 className="text-sm font-bold text-gray-900">{record.commodity}</h3>
+                  <span
+                    className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                      record.status
+                    )}`}
+                  >
+                    {getStatusText(record.status)}
+                  </span>
+                </div>
+
+                <p className="text-xs text-gray-600 mb-2">{record.specification}</p>
+
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-xl font-bold text-blue-600">
+                    {record.price.toLocaleString()}
+                    <span className="text-xs text-gray-500 ml-1">{record.unit}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-gray-600">
+                    <MapPin className="h-3 w-3" />
+                    {record.location}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+                  <span>Nguồn: {record.source}</span>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {record.collectedTime}
+                  </div>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleViewDetail(record)}
+                  className="w-full text-blue-600 hover:text-blue-700"
+                >
+                  <Eye className="h-4 w-4 mr-1" />
+                  Xem chi tiết
+                </Button>
+              </div>
+            ))}
+          </div>
+
           {/* Pagination */}
-          <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 flex items-center justify-between">
-            <div className="text-sm text-gray-600">Hiển thị 1-5 của 247 bản ghi</div>
+          <div className="bg-gray-50 px-3 sm:px-6 py-3 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-xs sm:text-sm text-gray-600">Hiển thị 1-5 của 247 bản ghi</div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="text-xs">
                 Trước
               </Button>
-              <Button variant="outline" size="sm" className="bg-blue-600 text-white">
+              <Button variant="outline" size="sm" className="bg-blue-600 text-white text-xs">
                 1
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="hidden sm:inline-flex text-xs">
                 2
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="hidden sm:inline-flex text-xs">
                 3
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="text-xs">
                 Sau
               </Button>
             </div>

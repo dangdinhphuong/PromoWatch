@@ -28,7 +28,7 @@ export function SystemHeader({
 }: SystemHeaderProps) {
   return (
     <div className="bg-white border-b border-[#e5e7eb] w-full">
-      <div className="max-w-[1613px] mx-auto px-[45px] pt-6 pb-px">
+      <div className="max-w-[1600px] mx-auto px-8 pt-6 pb-px">{/* Changed from px-[45px] to px-8 */}
         <div className="flex items-end justify-between w-full h-[162.5px]">
           {/* Left side - Title and Subtitle */}
           <div className="relative h-[162.5px] w-[621px]">

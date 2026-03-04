@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileSpreadsheet, Shield, AlertTriangle, Database } from "lucide-react";
 import { PromotionFilter } from "@/app/components/promotion-filter";
 import { PromotionTable, type PromotionData } from "@/app/components/promotion-table";
@@ -42,7 +42,7 @@ const mockPromotions: PromotionData[] = [
     "id": 4900,
     "code": "khuyen-mai-hyphens-ceradan-tu-ngay-01102025-den-ngay-31122025",
     "name": "KHUYẾN MẠI HYPHENS – CERADAN TỪ NGÀY\n01/10/2025 ĐẾN NGÀY 31/12/2025",
-    "company": "CHI NHÁNH CÔNG TY TNHH DƯỢC PHẨM VÀ TRANG THIẾT BỊ Y TẾ HOÀNG ĐỨC",
+    "company": "CHI NH��NH CÔNG TY TNHH DƯỢC PHẨM VÀ TRANG THIẾT BỊ Y TẾ HOÀNG ĐỨC",
     "time": {
       "start": "2025-10-01",
       "end": "2025-12-31"
@@ -2290,7 +2290,7 @@ const mockPromotions: PromotionData[] = [
         "platform": "Shopee",
         "sourceName": "Bloggiamgia.vn",
         "hasHtml": true,
-        "content": "Shopee 5.5 - Siêu Sale Hàng Hiệu chính thức bùng nổ vào 0h ngày 5/5/2025 với loạt ưu đãi cực khủng không thể bỏ lỡ! Từ cơ hội hoàn đến 3 triệu Xu khi mua hàng Shopee trên YouTube, đến loạt deal cực sâu từ Shopee Mall giảm đến 50%, voucher Shopee giảm 100K cho người dùng mới, và miễn phí vận chuyển 0Đ – tất cả đều đang chờ bạn trong ngày sale lớn 5.5. Nếu bạn đang chờ một dịp để mua sắm thật tiết kiệm và hiệu quả, thì Shopee 5.5 chính là thời điểm vàng! Hãy cùng Bloggiamgia.vn khám phá ngay những ưu đãi siêu HOT tại Shopee 5.5!"
+        "content": "Shopee 5.5 - Siêu Sale Hàng Hiệu chính thức bùng nổ vào 0h ngày 5/5/2025 với loạt ��u đãi cực khủng không thể bỏ lỡ! Từ cơ hội hoàn đến 3 triệu Xu khi mua hàng Shopee trên YouTube, đến loạt deal cực sâu từ Shopee Mall giảm đến 50%, voucher Shopee giảm 100K cho người dùng mới, và miễn phí vận chuyển 0Đ – tất cả đều đang chờ bạn trong ngày sale lớn 5.5. Nếu bạn đang chờ một dịp để mua sắm thật tiết kiệm và hiệu quả, thì Shopee 5.5 chính là thời điểm vàng! Hãy cùng Bloggiamgia.vn khám phá ngay những ưu đãi siêu HOT tại Shopee 5.5!"
       }
     }
   },
@@ -2348,7 +2348,7 @@ const mockPromotions: PromotionData[] = [
       "rawA": null,
       "rawB": {
         "url": "https://kmttqg.vietrade.gov.vn/tin-khuyen-mai/4925/chuong-trinh-khuyen-mai-khach-hang-than-thiet-danh-cho-nhom-khach-hang-si-nho-trong-quy-4-nam-2025",
-        "title": "Chương trình khuyến mại khách hàng thân thiết dành cho nhóm khách hàng sỉ nhỏ trong\nquý 4 năm 2025",
+        "title": "Chương trình khuyến m���i khách hàng thân thiết dành cho nhóm khách hàng sỉ nhỏ trong\nquý 4 năm 2025",
         "company": "CÔNG TY TNHH QUỐC TẾ UNILEVER VIỆT NAM",
         "timeRange": "01/10/2025 - 31/12/2025"
       }
@@ -3106,6 +3106,77 @@ const mockPromotions: PromotionData[] = [
     }
   }
 ];
+// API Response interfaces
+interface ApiPromotion {
+  _id: string;
+  key: string;
+  agencyId: string;
+  code: string;
+  company: string;
+  crawledAt: string;
+  crawledAtDate: string;
+  createdAt: string;
+  discountPercent: number | null;
+  location: string | null;
+  meta: {
+    rawA: any;
+    rawB: any;
+  };
+  name: string;
+  productType: string | null;
+  promotionMethod: string | null;
+  rowStt: number;
+  source: "dichvucong" | "vietrade" | "crawl" | "bloggiamgia";
+  sourceUrl: string | null;
+  time: {
+    start: string | null;
+    end: string | null;
+  };
+  total: number;
+  type: "official" | "unofficial";
+  updatedAt: string;
+}
+
+interface ApiResponse {
+  ok: boolean;
+  data: ApiPromotion[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+// Convert API data to PromotionData format
+function mapApiToPromotionData(apiData: ApiPromotion): PromotionData {
+  return {
+    id: apiData._id,
+    code: apiData.code,
+    name: apiData.name,
+    company: apiData.company,
+    time: {
+      start: apiData.time.start,
+      end: apiData.time.end,
+    },
+    location: apiData.location,
+    productType: apiData.productType,
+    discountPercent: apiData.discountPercent,
+    promotionMethod: apiData.promotionMethod,
+    type: apiData.type,
+    agencyId: apiData.agencyId,
+    total: apiData.total,
+    rowStt: apiData.rowStt,
+    source: apiData.source,
+    sourceUrl: apiData.sourceUrl,
+    crawledAt: apiData.crawledAt,
+    legalStatus: apiData.type === "official" ? "approved" : "pending",
+    meta: apiData.meta,
+  };
+}
+
 export function PromotionsPage() {
   const [filters, setFilters] = useState({
     keyword: "",
@@ -3119,82 +3190,119 @@ export function PromotionsPage() {
     collectedEndDate: "",
   });
 
-  const [filteredData, setFilteredData] = useState<PromotionData[]>(mockPromotions);
+  const [filteredData, setFilteredData] = useState<PromotionData[]>([]);
   const [selectedPromotion, setSelectedPromotion] = useState<PromotionData | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 20,
+    total: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false,
+  });
 
   const displayData = filteredData;
+
+  // Fetch data from API
+  const fetchPromotions = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: pagination.page.toString(),
+        limit: pagination.pageSize.toString(),
+      });
+
+      // Add filters if set
+      if (filters.source !== "all") {
+        params.append("source", filters.source);
+      }
+      if (filters.type !== "all") {
+        params.append("type", filters.type);
+      }
+      if (filters.keyword) {
+        params.append("keyword", filters.keyword);
+      }
+      if (filters.applicableStartDate) {
+        params.append("applicableStartDate", filters.applicableStartDate);
+      }
+      if (filters.applicableEndDate) {
+        params.append("applicableEndDate", filters.applicableEndDate);
+      }
+      if (filters.collectedStartDate) {
+        params.append("collectedStartDate", filters.collectedStartDate);
+      }
+      if (filters.collectedEndDate) {
+        params.append("collectedEndDate", filters.collectedEndDate);
+      }
+
+      const response = await fetch(
+        `https://promowatch.onrender.com/api/promotions/data?${params.toString()}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          mode: 'cors',
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result: ApiResponse = await response.json();
+
+      if (result.ok) {
+        const mappedData = result.data.map(mapApiToPromotionData);
+        setFilteredData(mappedData);
+        // Update pagination metadata (but keep current page to avoid triggering useEffect)
+        setPagination(prev => ({
+          page: prev.page, // Don't update page here to avoid useEffect loop
+          pageSize: result.pagination.pageSize,
+          total: result.pagination.total,
+          totalPages: result.pagination.totalPages,
+          hasNext: result.pagination.hasNext,
+          hasPrev: result.pagination.hasPrev,
+        }));
+        toast.success(`Tải thành công ${result.data.length} khuyến mãi`);
+      } else {
+        throw new Error("API returned not ok");
+      }
+    } catch (error) {
+      console.error("Error fetching promotions:", error);
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        toast.error("Lỗi kết nối API. Vui lòng kiểm tra CORS hoặc kết nối mạng.");
+      } else {
+        toast.error("Không thể tải dữ liệu từ API.");
+      }
+      // Don't use mock data, keep empty or previous data
+      setFilteredData([]);
+      setPagination(prev => ({
+        ...prev,
+        total: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false,
+      }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load data when pagination or filters change
+  useEffect(() => {
+    fetchPromotions();
+  }, [pagination.page, filters.source, filters.applicableStartDate, filters.applicableEndDate]);
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSearch = () => {
-    let filtered = [...mockPromotions];
-
-    // Filter by keyword (search in name, company, code)
-    if (filters.keyword) {
-      filtered = filtered.filter((item) => {
-        const searchText = filters.keyword.toLowerCase();
-        return (
-          item.name?.toLowerCase().includes(searchText) ||
-          item.company?.toLowerCase().includes(searchText) ||
-          item.code?.toLowerCase().includes(searchText)
-        );
-      });
-    }
-
-    // Filter by type
-    if (filters.type !== "all") {
-      filtered = filtered.filter((item) => item.type === filters.type);
-    }
-
-    // Filter by source
-    if (filters.source !== "all") {
-      filtered = filtered.filter((item) => item.source === filters.source);
-    }
-
-    // Filter by applicable date range (time.start and time.end)
-    if (filters.applicableStartDate) {
-      filtered = filtered.filter((item) => {
-        if (!item.time.start) return false;
-        const itemDate = new Date(item.time.start);
-        const filterDate = new Date(filters.applicableStartDate);
-        return itemDate >= filterDate;
-      });
-    }
-
-    if (filters.applicableEndDate) {
-      filtered = filtered.filter((item) => {
-        if (!item.time.end) return false;
-        const itemDate = new Date(item.time.end);
-        const filterDate = new Date(filters.applicableEndDate);
-        return itemDate <= filterDate;
-      });
-    }
-
-    // Filter by collected date range (crawledAt)
-    if (filters.collectedStartDate) {
-      filtered = filtered.filter((item) => {
-        if (!item.crawledAt) return false;
-        const itemDate = new Date(item.crawledAt);
-        const filterDate = new Date(filters.collectedStartDate);
-        return itemDate >= filterDate;
-      });
-    }
-
-    if (filters.collectedEndDate) {
-      filtered = filtered.filter((item) => {
-        if (!item.crawledAt) return false;
-        const itemDate = new Date(item.crawledAt);
-        const filterDate = new Date(filters.collectedEndDate);
-        filterDate.setHours(23, 59, 59, 999); // End of day
-        return itemDate <= filterDate;
-      });
-    }
-
-    setFilteredData(filtered);
-    toast.success(`Tìm thấy ${filtered.length} kết quả phù hợp`);
+    setPagination(prev => ({ ...prev, page: 1 })); // Reset to page 1, useEffect will call fetchPromotions
   };
 
   const handleReset = () => {
@@ -3209,8 +3317,13 @@ export function PromotionsPage() {
       collectedStartDate: "",
       collectedEndDate: "",
     });
-    setFilteredData(mockPromotions);
+    setPagination(prev => ({ ...prev, page: 1 }));
     toast.info("Đã reset bộ lọc");
+  };
+
+  // Pagination handlers
+  const handlePageChange = (newPage: number) => {
+    setPagination(prev => ({ ...prev, page: newPage })); // useEffect will call fetchPromotions
   };
 
   const handleExport = () => {
@@ -3236,11 +3349,11 @@ export function PromotionsPage() {
     setSelectedPromotion(null);
   };
 
-  const officialCount = mockPromotions.filter((p) => p.type === "official").length;
-  const unofficialCount = mockPromotions.filter((p) => p.type === "unofficial").length;
-  const dichvucongCount = mockPromotions.filter((p) => p.source === "dichvucong").length;
-  const vietradeCount = mockPromotions.filter((p) => p.source === "vietrade").length;
-  const crawlCount = mockPromotions.filter((p) => p.source === "crawl").length;
+  const officialCount = filteredData.filter((p) => p.type === "official").length;
+  const unofficialCount = filteredData.filter((p) => p.type === "unofficial").length;
+  const dichvucongCount = filteredData.filter((p) => p.source === "dichvucong").length;
+  const vietradeCount = filteredData.filter((p) => p.source === "vietrade").length;
+  const crawlCount = filteredData.filter((p) => p.source === "crawl").length;
 
   return (
     <div className="p-6">
@@ -3251,7 +3364,7 @@ export function PromotionsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Tổng số chương trình</p>
-                <p className="text-3xl font-bold text-blue-700 mt-1">{displayData.length}</p>
+                <p className="text-3xl font-bold text-blue-700 mt-1">{pagination.total}</p>
               </div>
               <FileSpreadsheet className="h-10 w-10 text-blue-300" />
             </div>
@@ -3328,7 +3441,74 @@ export function PromotionsPage() {
 
       {/* Data Table */}
       <div className="w-full">
-        <PromotionTable data={displayData} onViewDetail={handleViewDetail} />
+        {loading ? (
+          <div className="bg-white rounded-lg border border-gray-200 shadow p-12 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Đang tải dữ liệu...</p>
+          </div>
+        ) : (
+          <>
+            <PromotionTable data={displayData} onViewDetail={handleViewDetail} />
+            
+            {/* Pagination */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm mt-4 p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Hiển thị {(pagination.page - 1) * pagination.pageSize + 1} - {Math.min(pagination.page * pagination.pageSize, pagination.total)} trong tổng số {pagination.total} bản ghi
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handlePageChange(pagination.page - 1)}
+                    disabled={!pagination.hasPrev}
+                    className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    Trước
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {[...Array(Math.min(5, pagination.totalPages))].map((_, i) => {
+                      const pageNum = i + 1;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`px-3 py-1 border rounded text-sm ${
+                            pagination.page === pageNum
+                              ? "bg-blue-600 text-white border-blue-600"
+                              : "border-gray-300 hover:bg-gray-50"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                    {pagination.totalPages > 5 && (
+                      <>
+                        <span className="px-2">...</span>
+                        <button
+                          onClick={() => handlePageChange(pagination.totalPages)}
+                          className={`px-3 py-1 border rounded text-sm ${
+                            pagination.page === pagination.totalPages
+                              ? "bg-blue-600 text-white border-blue-600"
+                              : "border-gray-300 hover:bg-gray-50"
+                          }`}
+                        >
+                          {pagination.totalPages}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handlePageChange(pagination.page + 1)}
+                    disabled={!pagination.hasNext}
+                    className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    Sau
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Detail Modal */}

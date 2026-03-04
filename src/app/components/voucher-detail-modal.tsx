@@ -52,9 +52,9 @@ export function VoucherDetailModal({ voucher, isOpen, onClose }: VoucherDetailMo
   return (
     <DialogPrimitive.Root open={isOpen} onOpenChange={onClose}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
-          className="fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] w-[90vw] max-w-[450px] bg-white rounded-2xl shadow-2xl overflow-hidden"
+          className="fixed left-[50%] top-[50%] z-[60] translate-x-[-50%] translate-y-[-50%] w-[90vw] max-w-[450px] max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden overflow-y-auto"
           onPointerDownOutside={(e) => e.preventDefault()}
         >
           {/* Header with close button */}

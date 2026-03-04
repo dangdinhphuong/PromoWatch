@@ -53,7 +53,7 @@ const insights = [
 
 export function PriceForecast() {
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
       <div className="w-full">
         {/* Header */}
         <div className="mb-6">

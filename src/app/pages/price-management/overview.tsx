@@ -1,4 +1,4 @@
-import { TrendingUp, MapPin, AlertTriangle, TrendingDown } from "lucide-react";
+import { TrendingUp, MapPin, AlertTriangle, TrendingDown, Bell } from "lucide-react";
 import { ComposedChart, Area, Line, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Button } from "@/app/components/ui/button";
 import {
@@ -10,6 +10,7 @@ import {
 } from "@/app/components/ui/select";
 import { SystemHeader } from "@/app/components/SystemHeader";
 import { PageHeader } from "@/app/components/page-header";
+import { useState } from "react";
 
 export type PriceManagementPage = 
   | "overview"
@@ -150,22 +151,149 @@ const navigationCards = [
   },
 ];
 
+// Mock data for regions monitoring
+const regionsData = [
+  {
+    id: 1,
+    province: "TP. Hồ Chí Minh",
+    region: "Miền Nam",
+    currentPrice: 26800,
+    product: "Gạo thường",
+    change: 9.2,
+    status: "high",
+    statusText: "Cảnh báo cao",
+    barColor: "bg-red-600"
+  },
+  {
+    id: 2,
+    province: "Cần Thơ",
+    region: "Đồng bằng sông Cửu Long",
+    currentPrice: 25900,
+    product: "Gạo thường",
+    change: 6.8,
+    status: "medium",
+    statusText: "Theo dõi",
+    barColor: "bg-orange-600"
+  },
+  {
+    id: 3,
+    province: "An Giang",
+    region: "Đồng bằng sông Cửu Long",
+    currentPrice: 25400,
+    product: "Gạo thường",
+    change: 5.5,
+    status: "medium",
+    statusText: "Theo dõi",
+    barColor: "bg-orange-600"
+  },
+  {
+    id: 4,
+    province: "Hà Nội",
+    region: "Miền Bắc",
+    currentPrice: 27200,
+    product: "Gạo thường",
+    change: 8.1,
+    status: "high",
+    statusText: "Cảnh báo cao",
+    barColor: "bg-red-600"
+  },
+  {
+    id: 5,
+    province: "Đà Nẵng",
+    region: "Miền Trung",
+    currentPrice: 26100,
+    product: "Gạo thường",
+    change: 7.3,
+    status: "high",
+    statusText: "Cảnh báo cao",
+    barColor: "bg-red-600"
+  },
+  {
+    id: 6,
+    province: "Hải Phòng",
+    region: "Miền Bắc",
+    currentPrice: 25800,
+    product: "Gạo thường",
+    change: 6.2,
+    status: "medium",
+    statusText: "Theo dõi",
+    barColor: "bg-orange-600"
+  },
+  {
+    id: 7,
+    province: "Long An",
+    region: "Đồng bằng sông Cửu Long",
+    currentPrice: 25600,
+    product: "Gạo thường",
+    change: 5.9,
+    status: "medium",
+    statusText: "Theo dõi",
+    barColor: "bg-orange-600"
+  },
+  {
+    id: 8,
+    province: "Tiền Giang",
+    region: "Đồng bằng sông Cửu Long",
+    currentPrice: 25300,
+    product: "Gạo thường",
+    change: 5.4,
+    status: "medium",
+    statusText: "Theo dõi",
+    barColor: "bg-orange-600"
+  },
+  {
+    id: 9,
+    province: "Bình Dương",
+    region: "Miền Nam",
+    currentPrice: 26500,
+    product: "Gạo thường",
+    change: 8.7,
+    status: "high",
+    statusText: "Cảnh báo cao",
+    barColor: "bg-red-600"
+  },
+  {
+    id: 10,
+    province: "Đồng Nai",
+    region: "Miền Nam",
+    currentPrice: 26300,
+    product: "Gạo thường",
+    change: 7.8,
+    status: "high",
+    statusText: "Cảnh báo cao",
+    barColor: "bg-red-600"
+  },
+  {
+    id: 11,
+    province: "Bà Rịa - Vũng Tàu",
+    region: "Miền Nam",
+    currentPrice: 25900,
+    product: "Gạo thường",
+    change: 6.5,
+    status: "medium",
+    statusText: "Theo dõi",
+    barColor: "bg-orange-600"
+  },
+  {
+    id: 12,
+    province: "Kiên Giang",
+    region: "Đồng bằng sông Cửu Long",
+    currentPrice: 25200,
+    product: "Gạo thường",
+    change: 5.2,
+    status: "medium",
+    statusText: "Theo dõi",
+    barColor: "bg-orange-600"
+  }
+];
+
 export function PriceManagementOverview({ onNavigate }: PriceManagementOverviewProps) {
   return (
-    <div className="min-h-screen bg-[#fafafa]">
-      {/* System Header */}
-      <SystemHeader
-        title="Quản lý nhà nước về giá & theo dõi/bình ổn"
-        subtitle="Giám sát biến động giá và hỗ trợ điều hành thị trường – Bộ Công Thương"
-        onBack={() => window.history.back()}
-        timeRangeValue="30"
-        platformValue="nationwide"
-      />
-
+    <div className="min-h-screen bg-[#fafafa] p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6 relative">
       {/* Status Summary - Large panels */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-[1600px] mx-auto px-8 py-8">
-          <div className="grid grid-cols-4 gap-6">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm mb-4 lg:mb-6">
+        <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
             {/* Panel 1 */}
             <div className="border-l-4 border-blue-600 pl-5">
               <p className="text-[13px] text-[#666666] mb-2 font-medium uppercase tracking-wide">Giá trung bình toàn quốc</p>
@@ -210,10 +338,10 @@ export function PriceManagementOverview({ onNavigate }: PriceManagementOverviewP
       </div>
 
       {/* Main Content - 8/4 Grid */}
-      <div className="max-w-[1600px] mx-auto px-8 py-8">
-        <div className="grid grid-cols-12 gap-6">
+      <div className="mb-4 lg:mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
           {/* Left - Primary Chart (8 cols) */}
-          <div className="col-span-8 bg-white border border-gray-200 rounded p-6">
+          <div className="lg:col-span-8 bg-white border border-gray-200 rounded p-4 lg:p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-[18px] font-semibold text-[#1a1a1a] mb-1">Xu hướng giá toàn quốc</h2>
@@ -322,7 +450,7 @@ export function PriceManagementOverview({ onNavigate }: PriceManagementOverviewP
           </div>
 
           {/* Right - Situation Awareness (4 cols) */}
-          <div className="col-span-4 space-y-6">
+          <div className="lg:col-span-4 space-y-6">
             {/* Map/Heatmap */}
             <div className="bg-white border border-gray-200 rounded p-6">
               <h3 className="text-[16px] font-semibold text-[#1a1a1a] mb-4">Bản đồ nhiệt biến động giá</h3>
@@ -363,123 +491,119 @@ export function PriceManagementOverview({ onNavigate }: PriceManagementOverviewP
       </div>
 
       {/* Action-oriented Section: Khu vực cần theo dõi */}
-      <div className="max-w-[1600px] mx-auto px-8 pb-6">
-        <div className="bg-white border border-gray-200 rounded">
-          <div className="px-6 py-5 border-b border-gray-200">
-            <h2 className="text-[18px] font-semibold text-[#1a1a1a]">Khu vực cần theo dõi</h2>
+      <div className="mb-4 lg:mb-6">
+        <div className="bg-white border border-gray-200 rounded overflow-hidden">
+          <div className="px-4 sm:px-6 py-4 lg:py-5 border-b border-gray-200">
+            <h2 className="text-[16px] sm:text-[18px] font-semibold text-[#1a1a1a]">Khu vực cần theo dõi</h2>
             <p className="text-[13px] text-[#666666] mt-1">Tỉnh/thành phố có biến động giá vượt ngưỡng cảnh báo</p>
           </div>
-          <div className="divide-y divide-gray-100">
-            {/* Row 1 */}
-            <div className="px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors group">
-              <div className="flex items-center gap-6">
-                <div className="w-1 h-12 bg-red-600 rounded-full"></div>
-                <div className="flex-1 grid grid-cols-12 gap-6 items-center">
-                  <div className="col-span-3">
-                    <p className="text-[15px] font-semibold text-[#1a1a1a] group-hover:text-blue-600">TP. Hồ Chí Minh</p>
-                    <p className="text-[12px] text-[#999999]">Miền Nam</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Giá hiện tại</p>
-                    <p className="text-[16px] font-semibold text-[#1a1a1a]">26,800₫</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Biến động</p>
-                    <p className="text-[16px] font-semibold text-red-600">+9.2%</p>
-                  </div>
-                  <div className="col-span-3">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Trạng thái</p>
-                    <span className="inline-flex px-3 py-1 text-[12px] font-medium bg-red-100 text-red-700 rounded">Cảnh báo cao</span>
-                  </div>
-                  <div className="col-span-2 text-right">
-                    <Button variant="ghost" size="sm" className="text-[13px] text-blue-600 hover:text-blue-700">
-                      Xem chi tiết →
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
+          
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-left text-[12px] font-semibold text-[#666666] uppercase tracking-wide w-[5%]"></th>
+                  <th className="px-6 py-3 text-left text-[12px] font-semibold text-[#666666] uppercase tracking-wide w-[25%]">Tỉnh/Thành phố</th>
+                  <th className="px-6 py-3 text-left text-[12px] font-semibold text-[#666666] uppercase tracking-wide w-[20%]">Giá hiện tại</th>
+                  <th className="px-6 py-3 text-left text-[12px] font-semibold text-[#666666] uppercase tracking-wide w-[15%]">Biến động</th>
+                  <th className="px-6 py-3 text-left text-[12px] font-semibold text-[#666666] uppercase tracking-wide w-[20%]">Trạng thái</th>
+                  <th className="px-6 py-3 text-right text-[12px] font-semibold text-[#666666] uppercase tracking-wide w-[15%]">Hành động</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {regionsData.map((region) => (
+                  <tr key={region.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className={`w-1 h-12 ${region.barColor} rounded-full`}></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-[15px] font-semibold text-[#1a1a1a]">{region.province}</p>
+                      <p className="text-[13px] text-[#999999] mt-0.5">{region.region}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-[16px] font-semibold text-[#1a1a1a]">{region.currentPrice.toLocaleString()}₫</p>
+                      <p className="text-[12px] text-[#666666] mt-0.5">{region.product}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className={`text-[16px] font-semibold ${region.status === "high" ? "text-red-600" : "text-orange-600"}`}>+{region.change}%</p>
+                      <p className="text-[12px] text-[#666666] mt-0.5">So với tuần trước</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex px-3 py-1.5 text-[13px] font-${region.status === "high" ? "semibold" : "medium"} ${region.status === "high" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"} rounded`}>{region.statusText}</span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <Button variant="ghost" size="sm" className="text-[13px] text-blue-600 hover:text-blue-700">
+                        Xem chi tiết →
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-            {/* Row 2 */}
-            <div className="px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors group">
-              <div className="flex items-center gap-6">
-                <div className="w-1 h-12 bg-orange-600 rounded-full"></div>
-                <div className="flex-1 grid grid-cols-12 gap-6 items-center">
-                  <div className="col-span-3">
-                    <p className="text-[15px] font-semibold text-[#1a1a1a] group-hover:text-blue-600">Cần Thơ</p>
-                    <p className="text-[12px] text-[#999999]">Đồng bằng sông Cửu Long</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Giá hiện tại</p>
-                    <p className="text-[16px] font-semibold text-[#1a1a1a]">25,900₫</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Biến động</p>
-                    <p className="text-[16px] font-semibold text-orange-600">+6.8%</p>
-                  </div>
-                  <div className="col-span-3">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Trạng thái</p>
-                    <span className="inline-flex px-3 py-1 text-[12px] font-medium bg-orange-100 text-orange-700 rounded">Theo dõi</span>
-                  </div>
-                  <div className="col-span-2 text-right">
-                    <Button variant="ghost" size="sm" className="text-[13px] text-blue-600 hover:text-blue-700">
+          {/* Mobile Card View */}
+          <div className="lg:hidden divide-y divide-gray-100">
+            {regionsData.map((region) => (
+              <div key={region.id} className="px-4 py-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-start gap-3">
+                  <div className={`w-1 h-16 ${region.barColor} rounded-full flex-shrink-0`}></div>
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div>
+                      <p className="text-[14px] font-semibold text-[#1a1a1a]">{region.province}</p>
+                      <p className="text-[12px] text-[#999999]">{region.region} • {region.product}</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div>
+                        <p className="text-[11px] text-[#999999] mb-0.5">Giá hiện tại</p>
+                        <p className="text-[15px] font-semibold text-[#1a1a1a]">{region.currentPrice.toLocaleString()}₫</p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-[#999999] mb-0.5">Biến động</p>
+                        <p className={`text-[15px] font-semibold ${region.status === "high" ? "text-red-600" : "text-orange-600"}`}>+{region.change}%</p>
+                      </div>
+                    </div>
+                    <div>
+                      <span className={`inline-flex px-2 py-1 text-[11px] font-${region.status === "high" ? "semibold" : "medium"} ${region.status === "high" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"} rounded`}>{region.statusText}</span>
+                    </div>
+                    <Button variant="ghost" size="sm" className="text-[13px] text-blue-600 hover:text-blue-700 w-full justify-center">
                       Xem chi tiết →
                     </Button>
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Row 3 */}
-            <div className="px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors group">
-              <div className="flex items-center gap-6">
-                <div className="w-1 h-12 bg-orange-600 rounded-full"></div>
-                <div className="flex-1 grid grid-cols-12 gap-6 items-center">
-                  <div className="col-span-3">
-                    <p className="text-[15px] font-semibold text-[#1a1a1a] group-hover:text-blue-600">An Giang</p>
-                    <p className="text-[12px] text-[#999999]">Đồng bằng sông Cửu Long</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Giá hiện tại</p>
-                    <p className="text-[16px] font-semibold text-[#1a1a1a]">25,400₫</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Biến động</p>
-                    <p className="text-[16px] font-semibold text-orange-600">+5.5%</p>
-                  </div>
-                  <div className="col-span-3">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Trạng thái</p>
-                    <span className="inline-flex px-3 py-1 text-[12px] font-medium bg-orange-100 text-orange-700 rounded">Theo dõi</span>
-                  </div>
-                  <div className="col-span-2 text-right">
-                    <Button variant="ghost" size="sm" className="text-[13px] text-blue-600 hover:text-blue-700">
-                      Xem chi tiết →
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Navigation to Sub-modules */}
-      <div className="max-w-[1600px] mx-auto px-8 pb-8">
-        <h2 className="text-[18px] font-semibold text-[#1a1a1a] mb-4">Các chức năng</h2>
-        <div className="grid grid-cols-5 gap-4">
+      <div>
+        <h2 className="text-[16px] sm:text-[18px] font-semibold text-[#1a1a1a] mb-4">Các chức năng</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 lg:gap-4">
           {navigationCards.map((card) => (
             <button
               key={card.id}
               onClick={() => onNavigate(card.page)}
-              className="bg-white border border-gray-200 rounded p-5 hover:border-blue-400 hover:shadow-sm transition-all text-left group"
+              className="bg-white border border-gray-200 rounded p-4 lg:p-5 hover:border-blue-400 hover:shadow-sm transition-all text-left group"
             >
-              <div className="text-3xl mb-3">{card.icon}</div>
-              <h3 className="text-[15px] font-semibold text-[#1a1a1a] mb-2 group-hover:text-blue-600">{card.title}</h3>
-              <p className="text-[12px] text-[#666666] leading-relaxed">{card.description}</p>
+              <div className="text-2xl lg:text-3xl mb-2 lg:mb-3">{card.icon}</div>
+              <h3 className="text-[14px] lg:text-[15px] font-semibold text-[#1a1a1a] mb-1 lg:mb-2 group-hover:text-blue-600">{card.title}</h3>
+              <p className="text-[11px] lg:text-[12px] text-[#666666] leading-relaxed">{card.description}</p>
             </button>
           ))}
         </div>
       </div>
+
+      {/* Floating Action Button */}
+      <button
+        onClick={() => onNavigate("alert-threshold")}
+        className="fixed bottom-6 right-6 lg:bottom-8 lg:right-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-2 px-5 py-3 font-medium text-[14px] group z-50"
+      >
+        <Bell className="h-5 w-5 animate-pulse group-hover:animate-none" />
+        <span>Tạo quy tắc cảnh báo</span>
+      </button>
     </div>
   );
 }

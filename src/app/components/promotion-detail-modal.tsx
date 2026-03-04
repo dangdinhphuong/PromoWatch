@@ -1,4 +1,4 @@
-import { ExternalLink, X, Calendar, MapPin, Building2, Package, Percent, Clock, FileText, Shield, AlertTriangle, Database } from "lucide-react";
+﻿import { ExternalLink, X, Calendar, MapPin, Building2, Package, Percent, Clock, FileText, Shield, AlertTriangle, Database } from "lucide-react";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
@@ -34,7 +34,7 @@ export function PromotionDetailModal({
     );
   };
 
-  const getSourceBadge = (source: "dichvucong" | "vietrade" | "crawl") => {
+  const getSourceBadge = (source: "dichvucong" | "vietrade" | "crawl" | "bloggiamgia") => {
     const badges = {
       dichvucong: (
         <Badge className="bg-blue-600 text-white border-blue-700 px-4 py-1.5 text-sm font-semibold">
@@ -52,6 +52,12 @@ export function PromotionDetailModal({
         <Badge className="bg-purple-600 text-white border-purple-700 px-4 py-1.5 text-sm font-semibold">
           <Database className="h-4 w-4 mr-1" />
           Thu thập tự động
+        </Badge>
+      ),
+      bloggiamgia: (
+        <Badge className="bg-red-600 text-white border-red-700 px-4 py-1.5 text-sm font-semibold">
+          <Database className="h-4 w-4 mr-1" />
+          Blog giảm giá
         </Badge>
       ),
     };
@@ -361,3 +367,4 @@ export function PromotionDetailModal({
     </DialogPrimitive.Root>
   );
 }
+

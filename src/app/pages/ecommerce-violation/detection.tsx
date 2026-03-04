@@ -194,7 +194,7 @@ export function DetectionPage({ onBack, onNavigate }: DetectionPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
       <div className="w-full">
         {/* Page Header */}
         <div className="flex items-center justify-between mb-6">
@@ -292,7 +292,94 @@ export function DetectionPage({ onBack, onNavigate }: DetectionPageProps) {
 
         {/* Violations Table */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Mobile Card View */}
+          <div className="lg:hidden divide-y divide-gray-200">
+            {filteredViolations.map((violation) => (
+              <div key={violation.id} className="p-4 hover:bg-gray-50">
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold text-gray-900 mb-1">{violation.storeName}</h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">
+                        {violation.platform}
+                      </span>
+                      <span className={`px-2 py-1 text-xs font-medium rounded ${getStatusBadge(violation.status).className}`}>
+                        {getStatusBadge(violation.status).label}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={`text-xl font-bold ${getRiskColor(violation.riskScore)}`}>
+                    {violation.riskScore}
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-xs mb-3">
+                  <div>
+                    <span className="text-gray-500">Loại vi phạm:</span>
+                    <p className="font-medium text-gray-900">{violation.violationType}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Sản phẩm:</span>
+                    <p className="font-medium text-gray-900">{violation.product}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Phát hiện:</span>
+                    <p className="font-medium text-gray-900">{violation.detectedDate}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openDetail(violation)}
+                    className="flex-1 gap-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                  >
+                    <Eye className="h-3 w-3" />
+                    Xem
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openStatusChange(violation)}
+                    className="flex-1 gap-1 text-orange-600 hover:text-orange-800 hover:bg-orange-50"
+                  >
+                    <AlertTriangle className="h-3 w-3" />
+                    Cảnh báo
+                  </Button>
+                  {violation.status === "pending" && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => markAsResolved(violation.id)}
+                        className="h-8 w-8 p-0 text-green-600"
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => markAsDismissed(violation.id)}
+                        className="h-8 w-8 p-0 text-gray-400"
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+            
+            {filteredViolations.length === 0 && (
+              <div className="p-8 text-center text-gray-500">
+                Không có dữ liệu
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>

@@ -151,7 +151,7 @@ export function RiskAlertPage({ onBack, onNavigate }: RiskAlertPageProps) {
   };
 
   const getStatusBadge = (status: string) => {
-    const badges: Record<string, { label: string; className: string }> = {
+    const badges: Record<string, { label: "Đang hiệu lực" | "Đang điều tra" | "Đã xử lý" | "Bỏ qua"; className: string }> = {
       active: { label: "Đang hiệu lực", className: "bg-red-100 text-red-700" },
       investigating: { label: "Đang điều tra", className: "bg-blue-100 text-blue-700" },
       resolved: { label: "Đã xử lý", className: "bg-green-100 text-green-700" },
@@ -247,7 +247,7 @@ export function RiskAlertPage({ onBack, onNavigate }: RiskAlertPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
       <div className="w-full">
         {/* Page Header */}
         <div className="flex items-center justify-between mb-6">

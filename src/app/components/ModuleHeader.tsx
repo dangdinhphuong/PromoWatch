@@ -27,7 +27,7 @@ interface ModuleHeaderProps {
 export function ModuleHeader({ title, subtitle, onBack, filters }: ModuleHeaderProps) {
   return (
     <div className="bg-white border-b border-[#e5e7eb] w-full">
-      <div className="max-w-[1600px] mx-auto px-[38.5px] pt-6 pb-px">
+      <div className="max-w-[1600px] mx-auto px-8 pt-6 pb-px">{/* Changed from px-[38.5px] to px-8 */}
         <div className="flex items-end justify-between w-full mb-6">
           {/* Left side - Title and Subtitle */}
           <div className="flex flex-col gap-3 max-w-[621px]">

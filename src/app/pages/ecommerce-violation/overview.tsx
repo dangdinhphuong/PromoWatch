@@ -78,17 +78,11 @@ const navigationCards = [
 
 export function ViolationOverview({ onNavigate, onBack }: ViolationOverviewProps) {
   return (
-    <div className="min-h-screen bg-[#fafafa]">
-      {/* Module Breadcrumb */}
-      <ModuleBreadcrumb
-        title="Kiểm soát hành vi vi phạm trên TMĐT / nền tảng số"
-        onBack={onBack}
-      />
-
+    <div className="min-h-screen bg-[#fafafa] p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
       {/* Status Summary - Large panels */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-[1600px] mx-auto px-8 py-8">
-          <div className="grid grid-cols-4 gap-6">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm mb-4 lg:mb-6">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
             <div className="border-l-4 border-blue-600 pl-5">
               <p className="text-[13px] text-[#666666] mb-2 font-medium uppercase tracking-wide">Tổng số gian hàng giám sát</p>
               <div className="flex items-baseline gap-3 mb-1">
@@ -129,10 +123,10 @@ export function ViolationOverview({ onNavigate, onBack }: ViolationOverviewProps
       </div>
 
       {/* Main Content - 8/4 Grid */}
-      <div className="max-w-[1600px] mx-auto px-8 py-8">
-        <div className="grid grid-cols-12 gap-6">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
           {/* Left - Primary Chart (8 cols) */}
-          <div className="col-span-8 bg-white border border-gray-200 rounded p-6">
+          <div className="lg:col-span-8 bg-white border border-gray-200 rounded p-4 lg:p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-[18px] font-semibold text-[#1a1a1a] mb-1">Xu hướng vi phạm theo thời gian</h2>
@@ -189,7 +183,7 @@ export function ViolationOverview({ onNavigate, onBack }: ViolationOverviewProps
           </div>
 
           {/* Right - Heatmap (4 cols) */}
-          <div className="col-span-4 space-y-6">
+          <div className="lg:col-span-4 space-y-6">
             <div className="bg-white border border-gray-200 rounded p-6">
               <h3 className="text-[16px] font-semibold text-[#1a1a1a] mb-4">Phân loại vi phạm</h3>
               <div className="space-y-3">
@@ -248,99 +242,182 @@ export function ViolationOverview({ onNavigate, onBack }: ViolationOverviewProps
       </div>
 
       {/* Action Section: Cảnh báo đang hiệu lực */}
-      <div className="max-w-[1600px] mx-auto px-8 pb-6">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-4 lg:pb-6">
         <div className="bg-white border border-gray-200 rounded">
-          <div className="px-6 py-5 border-b border-gray-200">
-            <h2 className="text-[18px] font-semibold text-[#1a1a1a]">Cảnh báo đang hiệu lực</h2>
+          <div className="px-4 sm:px-6 py-4 lg:py-5 border-b border-gray-200">
+            <h2 className="text-[16px] sm:text-[18px] font-semibold text-[#1a1a1a]">Cảnh báo đang hiệu lực</h2>
             <p className="text-[13px] text-[#666666] mt-1">Các vi phạm nghiêm trọng cần xử lý ưu tiên</p>
           </div>
-          <div className="divide-y divide-gray-100">
-            {/* Row 1 */}
-            <div className="px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors group">
-              <div className="flex items-center gap-6">
-                <div className="w-1 h-12 bg-red-600 rounded-full"></div>
-                <div className="flex-1 grid grid-cols-12 gap-6 items-center">
-                  <div className="col-span-3">
-                    <p className="text-[15px] font-semibold text-[#1a1a1a] group-hover:text-blue-600">FashionHub Official</p>
-                    <p className="text-[12px] text-[#999999]">Shopee</p>
-                  </div>
-                  <div className="col-span-3">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Loại vi phạm</p>
-                    <p className="text-[14px] font-semibold text-[#1a1a1a]">Hàng giả, hàng nhái</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Mức độ rủi ro</p>
-                    <span className="inline-flex px-3 py-1 text-[12px] font-medium bg-red-100 text-red-700 rounded">Cao - 92/100</span>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Trạng thái</p>
-                    <span className="inline-flex px-3 py-1 text-[12px] font-medium bg-yellow-100 text-yellow-700 rounded">Đang điều tra</span>
-                  </div>
-                  <div className="col-span-2 text-right">
+          
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-left text-[12px] font-semibold text-[#666666] uppercase tracking-wide w-[5%]"></th>
+                  <th className="px-6 py-3 text-left text-[12px] font-semibold text-[#666666] uppercase tracking-wide w-[20%]">Gian hàng</th>
+                  <th className="px-6 py-3 text-left text-[12px] font-semibold text-[#666666] uppercase tracking-wide w-[25%]">Loại vi phạm</th>
+                  <th className="px-6 py-3 text-left text-[12px] font-semibold text-[#666666] uppercase tracking-wide w-[15%]">Mức độ rủi ro</th>
+                  <th className="px-6 py-3 text-left text-[12px] font-semibold text-[#666666] uppercase tracking-wide w-[15%]">Trạng thái</th>
+                  <th className="px-6 py-3 text-left text-[12px] font-semibold text-[#666666] uppercase tracking-wide w-[10%]">Ngày phát hiện</th>
+                  <th className="px-6 py-3 text-right text-[12px] font-semibold text-[#666666] uppercase tracking-wide w-[10%]">Hành động</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                <tr className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="w-1 h-12 bg-red-600 rounded-full"></div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-[15px] font-semibold text-[#1a1a1a]">FashionHub Official</p>
+                    <p className="text-[13px] text-[#999999] mt-0.5">Shopee</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-[14px] font-medium text-[#1a1a1a]">Hàng giả, hàng nhái</p>
+                    <p className="text-[12px] text-[#666666] mt-0.5">Phát hiện 12 sản phẩm</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex px-3 py-1.5 text-[13px] font-semibold bg-red-100 text-red-700 rounded">Cao - 92/100</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex px-3 py-1.5 text-[13px] font-medium bg-yellow-100 text-yellow-700 rounded">Đang điều tra</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-[13px] text-[#666666]">08/02/2026</p>
+                  </td>
+                  <td className="px-6 py-4 text-right">
                     <Button variant="ghost" size="sm" className="text-[13px] text-blue-600 hover:text-blue-700">
                       Xem chi tiết →
                     </Button>
+                  </td>
+                </tr>
+                
+                <tr className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="w-1 h-12 bg-orange-600 rounded-full"></div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-[15px] font-semibold text-[#1a1a1a]">BeautyStore88</p>
+                    <p className="text-[13px] text-[#999999] mt-0.5">Lazada</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-[14px] font-medium text-[#1a1a1a]">Quảng cáo sai sự thật</p>
+                    <p className="text-[12px] text-[#666666] mt-0.5">Lừa dối về nguồn gốc</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex px-3 py-1.5 text-[13px] font-semibold bg-orange-100 text-orange-700 rounded">Trung bình - 78/100</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex px-3 py-1.5 text-[13px] font-medium bg-blue-100 text-blue-700 rounded">Đang theo dõi</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-[13px] text-[#666666]">07/02/2026</p>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <Button variant="ghost" size="sm" className="text-[13px] text-blue-600 hover:text-blue-700">
+                      Xem chi tiết →
+                    </Button>
+                  </td>
+                </tr>
+                
+                <tr className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="w-1 h-12 bg-red-600 rounded-full"></div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-[15px] font-semibold text-[#1a1a1a]">SuperFood Market</p>
+                    <p className="text-[13px] text-[#999999] mt-0.5">Facebook</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-[14px] font-medium text-[#1a1a1a]">Hàng cấm lưu hành</p>
+                    <p className="text-[12px] text-[#666666] mt-0.5">Thực phẩm không rõ nguồn gốc</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex px-3 py-1.5 text-[13px] font-semibold bg-red-100 text-red-700 rounded">Cao - 95/100</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex px-3 py-1.5 text-[13px] font-medium bg-purple-100 text-purple-700 rounded">Đã chuyển công an</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-[13px] text-[#666666]">05/02/2026</p>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <Button variant="ghost" size="sm" className="text-[13px] text-blue-600 hover:text-blue-700">
+                      Xem chi tiết →
+                    </Button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden divide-y divide-gray-100">
+            <div className="px-4 py-4 hover:bg-gray-50 transition-colors">
+              <div className="flex items-start gap-3">
+                <div className="w-1 h-16 bg-red-600 rounded-full flex-shrink-0"></div>
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div>
+                    <p className="text-[14px] font-semibold text-[#1a1a1a]">FashionHub Official</p>
+                    <p className="text-[12px] text-[#999999]">Shopee • 08/02/2026</p>
                   </div>
+                  <div>
+                    <p className="text-[13px] font-medium text-[#1a1a1a]">Hàng giả, hàng nhái</p>
+                    <p className="text-[12px] text-[#666666]">Phát hiện 12 sản phẩm</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex px-2 py-1 text-[11px] font-semibold bg-red-100 text-red-700 rounded">Cao</span>
+                    <span className="inline-flex px-2 py-1 text-[11px] font-medium bg-yellow-100 text-yellow-700 rounded">Đang điều tra</span>
+                  </div>
+                  <Button variant="ghost" size="sm" className="text-[13px] text-blue-600 hover:text-blue-700 w-full justify-center">
+                    Xem chi tiết →
+                  </Button>
                 </div>
               </div>
             </div>
-
-            {/* Row 2 */}
-            <div className="px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors group">
-              <div className="flex items-center gap-6">
-                <div className="w-1 h-12 bg-orange-600 rounded-full"></div>
-                <div className="flex-1 grid grid-cols-12 gap-6 items-center">
-                  <div className="col-span-3">
-                    <p className="text-[15px] font-semibold text-[#1a1a1a] group-hover:text-blue-600">BeautyStore88</p>
-                    <p className="text-[12px] text-[#999999]">Lazada</p>
+            
+            <div className="px-4 py-4 hover:bg-gray-50 transition-colors">
+              <div className="flex items-start gap-3">
+                <div className="w-1 h-16 bg-orange-600 rounded-full flex-shrink-0"></div>
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div>
+                    <p className="text-[14px] font-semibold text-[#1a1a1a]">BeautyStore88</p>
+                    <p className="text-[12px] text-[#999999]">Lazada • 07/02/2026</p>
                   </div>
-                  <div className="col-span-3">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Loại vi phạm</p>
-                    <p className="text-[14px] font-semibold text-[#1a1a1a]">Quảng cáo sai sự thật</p>
+                  <div>
+                    <p className="text-[13px] font-medium text-[#1a1a1a]">Quảng cáo sai sự thật</p>
+                    <p className="text-[12px] text-[#666666]">Lừa dối về nguồn gốc</p>
                   </div>
-                  <div className="col-span-2">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Mức độ rủi ro</p>
-                    <span className="inline-flex px-3 py-1 text-[12px] font-medium bg-orange-100 text-orange-700 rounded">TB - 78/100</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex px-2 py-1 text-[11px] font-semibold bg-orange-100 text-orange-700 rounded">TB</span>
+                    <span className="inline-flex px-2 py-1 text-[11px] font-medium bg-blue-100 text-blue-700 rounded">Đang theo dõi</span>
                   </div>
-                  <div className="col-span-2">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Trạng thái</p>
-                    <span className="inline-flex px-3 py-1 text-[12px] font-medium bg-blue-100 text-blue-700 rounded">Đang theo dõi</span>
-                  </div>
-                  <div className="col-span-2 text-right">
-                    <Button variant="ghost" size="sm" className="text-[13px] text-blue-600 hover:text-blue-700">
-                      Xem chi tiết →
-                    </Button>
-                  </div>
+                  <Button variant="ghost" size="sm" className="text-[13px] text-blue-600 hover:text-blue-700 w-full justify-center">
+                    Xem chi tiết →
+                  </Button>
                 </div>
               </div>
             </div>
-
-            {/* Row 3 */}
-            <div className="px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors group">
-              <div className="flex items-center gap-6">
-                <div className="w-1 h-12 bg-red-600 rounded-full"></div>
-                <div className="flex-1 grid grid-cols-12 gap-6 items-center">
-                  <div className="col-span-3">
-                    <p className="text-[15px] font-semibold text-[#1a1a1a] group-hover:text-blue-600">SuperFood Market</p>
-                    <p className="text-[12px] text-[#999999]">Facebook</p>
+            
+            <div className="px-4 py-4 hover:bg-gray-50 transition-colors">
+              <div className="flex items-start gap-3">
+                <div className="w-1 h-16 bg-red-600 rounded-full flex-shrink-0"></div>
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div>
+                    <p className="text-[14px] font-semibold text-[#1a1a1a]">SuperFood Market</p>
+                    <p className="text-[12px] text-[#999999]">Facebook • 05/02/2026</p>
                   </div>
-                  <div className="col-span-3">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Loại vi phạm</p>
-                    <p className="text-[14px] font-semibold text-[#1a1a1a]">Hàng cấm lưu hành</p>
+                  <div>
+                    <p className="text-[13px] font-medium text-[#1a1a1a]">Hàng cấm lưu hành</p>
+                    <p className="text-[12px] text-[#666666]">Thực phẩm không rõ nguồn gốc</p>
                   </div>
-                  <div className="col-span-2">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Mức độ rủi ro</p>
-                    <span className="inline-flex px-3 py-1 text-[12px] font-medium bg-red-100 text-red-700 rounded">Cao - 95/100</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex px-2 py-1 text-[11px] font-semibold bg-red-100 text-red-700 rounded">Cao</span>
+                    <span className="inline-flex px-2 py-1 text-[11px] font-medium bg-purple-100 text-purple-700 rounded">Chuyển CA</span>
                   </div>
-                  <div className="col-span-2">
-                    <p className="text-[13px] text-[#666666] mb-0.5">Trạng thái</p>
-                    <span className="inline-flex px-3 py-1 text-[12px] font-medium bg-purple-100 text-purple-700 rounded">Đã chuyển công an</span>
-                  </div>
-                  <div className="col-span-2 text-right">
-                    <Button variant="ghost" size="sm" className="text-[13px] text-blue-600 hover:text-blue-700">
-                      Xem chi tiết →
-                    </Button>
-                  </div>
+                  <Button variant="ghost" size="sm" className="text-[13px] text-blue-600 hover:text-blue-700 w-full justify-center">
+                    Xem chi tiết →
+                  </Button>
                 </div>
               </div>
             </div>
@@ -349,9 +426,9 @@ export function ViolationOverview({ onNavigate, onBack }: ViolationOverviewProps
       </div>
 
       {/* Navigation to Sub-modules */}
-      <div className="max-w-[1600px] mx-auto px-8 pb-8">
-        <h2 className="text-[18px] font-semibold text-[#1a1a1a] mb-4">Các chức năng</h2>
-        <div className="grid grid-cols-5 gap-4">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-6 lg:pb-8">
+        <h2 className="text-[16px] sm:text-[18px] font-semibold text-[#1a1a1a] mb-4">Các chức năng</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {navigationCards.map((card) => (
             <button
               key={card.id}

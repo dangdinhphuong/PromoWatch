@@ -63,6 +63,8 @@ const categoryIcons: Record<string, string> = {
   "shop-noi-bat": "⭐"
 };
 
+// ❌ REMOVED: Mock data - Now using 100% real Piggi API
+
 export function DiscountCodesPage() {
   const [selectedPlatform, setSelectedPlatform] = useState<string>("shopee");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -88,63 +90,46 @@ export function DiscountCodesPage() {
     const fetchCategories = async () => {
       setLoadingCategories(true);
       try {
-        const response = await fetch(
-          `https://portal.piggi.vn/api/voucher-category?slugSupplier=${selectedPlatform}&isNotChildren=true&pageSize=9999`
-        );
+        const query = new URLSearchParams({
+          slugSupplier: selectedPlatform,
+          isNotChildren: "true",
+          pageSize: "9999",
+        });
+
+        const response = await fetch(`/api/piggi/voucher-category?${query.toString()}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
         
         if (!response.ok) {
-          throw new Error("Failed to fetch categories");
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-
+        
         const data = await response.json();
-        
-        console.log("API Response:", data);
-        
-        // Handle different response structures
-        let categoryList: any[] = [];
-        
-        if (Array.isArray(data)) {
-          // Direct array response
-          categoryList = data;
-        } else if (data.data && data.data.data && Array.isArray(data.data.data)) {
-          // Nested data.data.data structure (piggi.vn API)
-          categoryList = data.data.data;
-        } else if (data.data && Array.isArray(data.data)) {
-          // data.data structure
-          categoryList = data.data;
-        } else if (data.results && Array.isArray(data.results)) {
-          // data.results structure
-          categoryList = data.results;
-        } else if (data.items && Array.isArray(data.items)) {
-          // data.items structure
-          categoryList = data.items;
-        } else {
-          console.warn("Unknown API response structure:", data);
-          throw new Error("Invalid API response format");
-        }
-        
-        // Map API response to our Category interface
-        const mappedCategories: Category[] = categoryList.map((item: any) => ({
-          id: item.id || item._id || item.slug,
-          name: item.title || item.name || "Unknown",
-          slug: item.slug || item.id
+        // Map API response to Category interface
+        const mappedCategories: Category[] = (data.data || []).map((item: any) => ({
+          id: item.id?.toString() || item.categoryId?.toString(),
+          name: item.title || item.name,
+          slug: item.slug || item.categorySlug
         }));
-
-        // Filter out "Toàn Sản" from API results (we have a hardcoded one)
-        const filteredCategories = mappedCategories.filter(cat => 
-          cat.slug !== "toan-san" && cat.name !== "Toàn Sản"
-        );
-
-        setCategories(filteredCategories);
+        
+        setCategories(mappedCategories);
         
         // Auto-select "Toàn Sản" (all categories) when platform changes
         setSelectedCategory("");
         setSelectedCategoryId("");
         
-        toast.success(`Đã tải ${filteredCategories.length} danh mục từ ${platformOptions.find(p => p.value === selectedPlatform)?.label}`);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-        toast.error("Không thể tải danh mục. Vui lòng thử lại.");
+        toast.success(`Đã tải ${mappedCategories.length} danh mục từ ${platformOptions.find(p => p.value === selectedPlatform)?.label}`);
+      } catch (error: any) {
+        console.error("❌ Error fetching categories:", error);
+        
+        // More detailed error message
+        toast.error("Không thể tải danh mục", {
+          description: error.message || "Vui lòng thử lại sau"
+        });
+        
         setCategories([]);
       } finally {
         setLoadingCategories(false);
@@ -168,41 +153,34 @@ export function DiscountCodesPage() {
     const fetchVouchers = async () => {
       setLoadingVouchers(true);
       try {
-        // Build API URL WITHOUT pageSize parameter
-        let apiUrl = `https://portal.piggi.vn/api/voucher?sort=totalClick,DESC&slugSupplier=${selectedPlatform}&page=1`;
-        
-        // Add categoryIds if a category is selected
+        const query = new URLSearchParams({
+          sort: "totalClick,DESC",
+          slugSupplier: selectedPlatform,
+          page: "1",
+          pageSize: String(pageSize),
+        });
+
         if (selectedCategoryId) {
-          apiUrl += `&categoryIds=${selectedCategoryId}`;
-        }
-        
-        console.log("Fetching vouchers from:", apiUrl);
-        
-        const response = await fetch(apiUrl);
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch vouchers");
+          query.set("categoryIds", selectedCategoryId);
         }
 
-        const data: VoucherResponse = await response.json();
-        
-        console.log("=== VOUCHER API RESPONSE ===");
-        console.log("Full data:", data);
-        console.log("Page info:", {
-          page: data.data.page,
-          pageSize: data.data.pageSize,
-          count: data.data.count,
-          dataLength: data.data.data.length
+        const response = await fetch(`/api/piggi/voucher?${query.toString()}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
         });
-        console.log("===========================");
         
-        // Map API response to our DiscountCode interface
-        const mappedVouchers: DiscountCode[] = data.data.data.map((item: any) => {
-          // Format discount based on voucherType
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data: VoucherResponse = await response.json();
+        // Map API response to DiscountCode interface
+        const mappedVouchers: DiscountCode[] = (data.data?.data || []).map((item: any) => {
           let discountDisplay = "0đ";
           
           if (item.voucherType === "percent") {
-            // Percentage discount
             if (item.voucherAmount) {
               discountDisplay = `${item.voucherAmount}%`;
             } else if (item.voucherReward) {
@@ -211,7 +189,6 @@ export function DiscountCodesPage() {
               discountDisplay = `${item.maxDiscount}%`;
             }
           } else {
-            // Value discount (default)
             if (item.voucherAmount) {
               discountDisplay = `${item.voucherAmount.toLocaleString('vi-VN')}đ`;
             } else if (item.maxDiscount) {
@@ -221,25 +198,20 @@ export function DiscountCodesPage() {
             }
           }
           
-          // Format min order - use minSpend
           let minOrderDisplay = "0đ";
           if (item.minSpend) {
             const minSpendNum = parseInt(item.minSpend);
             minOrderDisplay = `${minSpendNum.toLocaleString('vi-VN')}đ`;
           }
           
-          // Format expiry date - use expiredAt
           let expiryDisplay = "N/A";
           if (item.expiredAt) {
             const date = new Date(item.expiredAt);
             expiryDisplay = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
           }
           
-          // Get category name and icon
           const categoryName = item.voucherCategory?.title || "Khác";
           const categorySlug = item.voucherCategory?.slug || "";
-          
-          // Get description - use longDescription or note
           const description = item.longDescription || item.note || item.shortDescription || "Không có mô tả";
           
           return {
@@ -262,28 +234,25 @@ export function DiscountCodesPage() {
             link: item.detailLink || item.affLink
           };
         });
-
+        
         setVouchers(mappedVouchers);
-        setTotalVouchers(data.data.count);
+        setTotalVouchers(data.data?.count || 0);
         
-        // Check if there are more pages - Simple calculation
-        const currentDataCount = mappedVouchers.length;
-        const totalCount = data.data.count;
-        const moreAvailable = currentDataCount < totalCount;
-        
-        console.log("=== HAS MORE CHECK ===");
-        console.log("Current data count:", currentDataCount);
-        console.log("Total count:", totalCount);
-        console.log("Has more?", moreAvailable);
-        console.log("======================");
-        
-        setHasMore(moreAvailable);
+        // Check if there are more pages
+        const totalPages = Math.ceil((data.data?.count || 0) / pageSize);
+        setHasMore(totalPages > 1);
         
         toast.success(`Đã tải ${mappedVouchers.length} mã giảm giá`);
-      } catch (error) {
-        console.error("Error fetching vouchers:", error);
-        toast.error("Không thể tải mã giảm giá. Vui lòng thử lại.");
+      } catch (error: any) {
+        console.error("❌ Error fetching vouchers:", error);
+        
+        // More detailed error message
+        toast.error("Không thể tải mã giảm giá", {
+          description: error.message || "Vui lòng thử lại sau"
+        });
+        
         setVouchers([]);
+        setTotalVouchers(0);
       } finally {
         setLoadingVouchers(false);
       }
@@ -388,16 +357,18 @@ export function DiscountCodesPage() {
     try {
       const nextPage = currentPage + 1;
       
-      // Build API URL for next page
-      let apiUrl = `https://portal.piggi.vn/api/voucher?sort=totalClick,DESC&slugSupplier=${selectedPlatform}&page=${nextPage}`;
-      
+      const query = new URLSearchParams({
+        sort: "totalClick,DESC",
+        slugSupplier: selectedPlatform,
+        page: String(nextPage),
+        pageSize: String(pageSize),
+      });
+
       if (selectedCategoryId) {
-        apiUrl += `&categoryIds=${selectedCategoryId}`;
+        query.set("categoryIds", selectedCategoryId);
       }
-      
-      console.log("Loading more from:", apiUrl);
-      
-      const response = await fetch(apiUrl);
+
+      const response = await fetch(`/api/piggi/voucher?${query.toString()}`);
       
       if (!response.ok) {
         throw new Error("Failed to load more vouchers");
@@ -482,14 +453,14 @@ export function DiscountCodesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20 lg:pb-6">
       {/* Filter Section */}
-      <div className="px-6 pt-6 pb-4">
-        <div className="bg-white rounded-[14px] border border-gray-200 shadow-md p-[17px]">
-          <div className="flex gap-6 items-center">
+      <div className="px-3 sm:px-4 lg:px-6 pt-3 lg:pt-6 pb-4">
+        <div className="bg-white rounded-[14px] border border-gray-200 shadow-md p-3 sm:p-4 lg:p-[17px]">
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 items-start lg:items-center">
             {/* Platform Dropdown */}
-            <div className="w-64 flex flex-col gap-3">
-              <label className="text-sm font-bold text-gray-700 uppercase">
+            <div className="w-full lg:w-64 flex flex-col gap-2 lg:gap-3">
+              <label className="text-xs sm:text-sm font-bold text-gray-700 uppercase">
                 Platform
               </label>
               <select
@@ -509,15 +480,15 @@ export function DiscountCodesPage() {
             </div>
 
             {/* Category Buttons */}
-            <div className="flex-1 flex flex-col gap-3">
-              <label className="text-sm font-bold text-gray-700 uppercase">
+            <div className="w-full lg:flex-1 flex flex-col gap-2 lg:gap-3">
+              <label className="text-xs sm:text-sm font-bold text-gray-700 uppercase">
                 Danh mục
               </label>
               <div className="flex gap-2 flex-wrap">
                 {loadingCategories ? (
-                  <div className="text-sm text-gray-500">Đang tải danh mục...</div>
+                  <div className="text-xs sm:text-sm text-gray-500">Đang tải danh mục...</div>
                 ) : categories.length === 0 ? (
-                  <div className="text-sm text-gray-500">
+                  <div className="text-xs sm:text-sm text-gray-500">
                     {selectedPlatform ? "Không có danh mục" : "Vui lòng chọn platform"}
                   </div>
                 ) : (
@@ -528,7 +499,7 @@ export function DiscountCodesPage() {
                         setSelectedCategory("");
                         setSelectedCategoryId("");
                       }}
-                      className="h-[42px] px-6 rounded-[10px] text-sm transition-all whitespace-nowrap"
+                      className="h-[36px] sm:h-[42px] px-3 sm:px-4 lg:px-6 rounded-[10px] text-xs sm:text-sm transition-all whitespace-nowrap"
                       style={{
                         backgroundColor: selectedCategory === "" ? "#00a63e" : "#f3f4f6",
                         color: selectedCategory === "" ? "white" : "#364153",
@@ -546,7 +517,7 @@ export function DiscountCodesPage() {
                           setSelectedCategory(category.slug);
                           setSelectedCategoryId(category.id);
                         }}
-                        className="h-[42px] px-6 rounded-[10px] text-sm transition-all whitespace-nowrap"
+                        className="h-[36px] sm:h-[42px] px-3 sm:px-4 lg:px-6 rounded-[10px] text-xs sm:text-sm transition-all whitespace-nowrap"
                         style={{
                           backgroundColor: selectedCategory === category.slug ? "#00a63e" : "#f3f4f6",
                           color: selectedCategory === category.slug ? "white" : "#364153",
@@ -565,10 +536,10 @@ export function DiscountCodesPage() {
       </div>
 
       {/* Voucher Grid */}
-      <div className="px-6 pb-6">
+      <div className="px-3 sm:px-4 lg:px-6 pb-6">
         <div className="w-full">
           {loadingVouchers ? (
-            <div className="grid grid-cols-4 gap-4 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 w-full">
               {Array.from({ length: 12 }).map((_, index) => (
                 <div key={index} className="bg-white rounded-lg border border-gray-200 overflow-hidden animate-pulse">
                   <div className="flex">
@@ -588,14 +559,14 @@ export function DiscountCodesPage() {
               ))}
             </div>
           ) : vouchers.length === 0 ? (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-12 sm:py-20">
               <div className="text-center">
-                <p className="text-lg font-bold text-gray-700 mb-2">Không có mã giảm giá</p>
-                <p className="text-sm text-gray-500">Vui lòng chọn platform và danh mục khác</p>
+                <p className="text-base sm:text-lg font-bold text-gray-700 mb-2">Không có mã giảm giá</p>
+                <p className="text-xs sm:text-sm text-gray-500">Vui lòng chọn platform và danh mục khác</p>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-4 gap-4 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 w-full">
               {vouchers.map((code) => (
                 <div
                   key={code.id}
@@ -620,7 +591,7 @@ export function DiscountCodesPage() {
                     </div>
 
                     {/* Right Side - Content */}
-                    <div className="flex-1 p-3 min-w-0 pb-8">
+                    <div className="flex-1 p-3 min-w-0">
                       {/* Discount */}
                       <div className="mb-1.5">
                         <span className="text-sm text-gray-700">Giảm </span>
@@ -645,16 +616,16 @@ export function DiscountCodesPage() {
                     </div>
                   </div>
 
-                  {/* HSD Badge - Overlapping bottom-left */}
-                  <div className="absolute left-2 bottom-11 z-10">
-                    <div className="bg-white rounded-full border-2 border-green-600 shadow-md px-2.5 py-1 flex items-center gap-1">
+                  {/* HSD Badge */}
+                  <div className="px-2 pt-2">
+                    <div className="inline-flex bg-white rounded-full border-2 border-green-600 shadow-sm px-2.5 py-1 items-center gap-1">
                       <Clock className="w-3 h-3 text-green-600" />
                       <p className="text-xs font-bold text-green-600">HSD: {code.expiryDate}</p>
                     </div>
                   </div>
 
                   {/* Footer Actions */}
-                  <div className="border-t border-gray-200 px-2 py-2 flex gap-2">
+                  <div className="border-t border-gray-200 mt-2 px-2 py-2 flex gap-2">
                     <button
                       onClick={() => handleViewDetails(code.id)}
                       className="flex-1 h-9 bg-white border border-gray-300 rounded-md flex items-center justify-center gap-1 hover:bg-gray-50 transition-colors"
@@ -718,11 +689,11 @@ export function DiscountCodesPage() {
       {/* Voucher Details Modal */}
       {selectedVoucher && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4"
           onClick={() => setSelectedVoucher(null)}
         >
           <div 
-            className="bg-white rounded-xl max-w-[480px] w-full shadow-2xl"
+            className="bg-white rounded-xl max-w-[480px] w-full max-h-[90vh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { PageHeader } from "@/app/components/page-header";
+import { MobileTopBar } from "@/app/components/MobileTopBar";
 
 interface LayoutProps {
   children: ReactNode;
@@ -22,10 +23,14 @@ export function Layout({ children, activePage, onPageChange, onScrollToSection }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Desktop Header */}
       <PageHeader onNavigate={handleHeaderNavigate} onScrollToSection={handleScrollToSection} />
       
+      {/* Mobile Top Bar with Logo */}
+      <MobileTopBar showLogo={true} />
+      
       {/* Main Content with top padding for fixed header */}
-      <main className="pt-16">{children}</main>
+      <main className="pt-14 lg:pt-16">{children}</main>
     </div>
   );
 }

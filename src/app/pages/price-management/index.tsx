@@ -7,6 +7,7 @@ import { PriceForecast } from "./forecast";
 import { PolicyLog } from "./policy-log";
 import { PageHeader } from "@/app/components/page-header";
 import { PriceManagementSidebar } from "@/app/components/PriceManagementSidebar";
+import { MobileTopBar } from "@/app/components/MobileTopBar";
 
 type PageType = "overview" | "database" | "dashboard" | "alerts" | "forecast" | "policy-log";
 
@@ -16,6 +17,7 @@ interface PriceManagementModuleProps {
 
 export function PriceManagementModule({ onBack }: PriceManagementModuleProps) {
   const [currentPage, setCurrentPage] = useState<PageType>("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleNavigate = (page: PageType) => {
     setCurrentPage(page);
@@ -57,19 +59,31 @@ export function PriceManagementModule({ onBack }: PriceManagementModuleProps) {
       case "policy-log":
         return "Nhật ký quyết sách";
       default:
-        return "";
+        return "Quản lý giá";
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Page Header */}
+      {/* Desktop Header */}
       <PageHeader onNavigateToHome={onBack} />
+      
+      {/* Mobile Top Bar with Menu button */}
+      <MobileTopBar 
+        title={getPageTitle()} 
+        onBack={currentPage !== "overview" ? handleBackToOverview : onBack}
+        onToggleSidebar={() => setSidebarOpen(true)}
+      />
 
       {/* Main Content with Sidebar */}
-      <div className="flex pt-16">
-        <PriceManagementSidebar activePage={currentPage} onNavigate={handleNavigate} />
-        <div className="flex-1">{renderPage()}</div>
+      <div className="flex pt-14 lg:pt-16">
+        <PriceManagementSidebar 
+          activePage={currentPage} 
+          onNavigate={handleNavigate}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div className="flex-1 w-full lg:w-auto">{renderPage()}</div>
       </div>
     </div>
   );

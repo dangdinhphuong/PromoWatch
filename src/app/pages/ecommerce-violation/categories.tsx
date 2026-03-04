@@ -231,7 +231,7 @@ export function CategoriesPage({ onBack, onNavigate }: CategoriesPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
       <div className="w-full">
         {/* Page Header */}
         <div className="flex items-center justify-between mb-6">
@@ -429,7 +429,7 @@ export function CategoriesPage({ onBack, onNavigate }: CategoriesPageProps) {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa danh mục</DialogTitle>
+            <DialogTitle>Chỉnh sửa danh m���c</DialogTitle>
             <DialogDescription>Cập nhật thông tin danh mục vi phạm</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
