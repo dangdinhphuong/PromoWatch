@@ -6,6 +6,18 @@ dotenv.config({ path: path.join(paths.repoRootDir, ".env") });
 
 const env = process.env;
 
+const supabaseUrl = env.SUPABASE_URL || env.VITE_SUPABASE_URL || "";
+const supabaseApiKey =
+  env.SUPABASE_SERVICE_ROLE_KEY ||
+  env.SUPABASE_API_KEY ||
+  env.SUPABASE_ANON_KEY ||
+  env.VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
+  "";
+const supabaseEnabledEnv = env.SUPABASE_PROMOTIONS_ENABLED;
+const supabasePromotionsEnabled =
+  supabaseEnabledEnv === "true" ||
+  (supabaseEnabledEnv !== "false" && Boolean(supabaseUrl && supabaseApiKey));
+
 export const config = {
   port: Number(env.PORT || 4000),
   nodeEnv: env.NODE_ENV || "development",
@@ -14,6 +26,12 @@ export const config = {
     uri: env.MONGO_URI || "mongodb://localhost:27017",
     dbName: env.MONGO_DB || "webtoolkit",
     promotionsEnabled: env.MONGO_PROMOTIONS_ENABLED === "true",
+  },
+  supabase: {
+    url: supabaseUrl,
+    apiKey: supabaseApiKey,
+    table: env.SUPABASE_PROMOTIONS_TABLE || "np_promotions",
+    promotionsEnabled: supabasePromotionsEnabled,
   },
   promotionsCrawl: {
     enabled: env.PROMOTIONS_CRAWL_ENABLED === "true",

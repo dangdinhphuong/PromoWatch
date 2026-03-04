@@ -15,7 +15,11 @@ import {
   parsePromotionsDateParam,
   resolvePromotionsDataFileForRead,
 } from "../modules/promotions/shared/promotionsDataFiles.js";
-import { tryUpsertPromotions } from "../modules/promotions/shared/promotionsMongoStore.js";
+import { syncPromotionsFileToSupabase } from "../modules/promotions/shared/promotionsSupabaseSync.js";
+import {
+  pingSupabase,
+  tryUpsertPromotionsToSupabase,
+} from "../modules/promotions/shared/promotionsSupabaseStore.js";
 
 const router = Router();
 const PIGGI_API_BASE_URL = "https://portal.piggi.vn/api";
@@ -66,6 +70,15 @@ router.get("/mongo/ping", async (req, res) => {
     const db = await getMongoDb();
     await db.command({ ping: 1 });
     res.json({ ok: true, db: db.databaseName });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message, code: error.code });
+  }
+});
+
+router.get("/supabase/ping", async (req, res) => {
+  try {
+    const result = await pingSupabase();
+    res.json({ ok: true, ...result });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message, code: error.code });
   }
@@ -164,64 +177,281 @@ router.post("/promotions/bloggiamgia/fetch", async (req, res) => {
   }
 });
 
-router.post("/promotions/mongo/upsert", async (req, res) => {
+async function handleSupabaseUpsert(req, res) {
   try {
     const payload = req.body;
     const records = Array.isArray(payload) ? payload : payload ? [payload] : [];
-    const result = await tryUpsertPromotions(records, { logger: console });
+    const result = await tryUpsertPromotionsToSupabase(records, { logger: console });
     const status = result.ok ? 200 : 500;
-    res.status(status).json(result);
+    res.status(status).json({ ...result, target: "supabase" });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
   }
-});
+}
 
-router.post("/promotions/mongo/sync", async (req, res) => {
+async function handleSupabaseSync(req, res) {
   const dateParam = req.query.date;
   try {
-    let filePath;
-
-    if (dateParam !== undefined) {
-      const parsedDate = parsePromotionsDateParam(dateParam);
-      if (!parsedDate) {
-        return res.status(400).json({
-          ok: false,
-          message: "Invalid date. Use d-m-yyyy (e.g. 9-2-2026) or yyyy-m-d (e.g. 2026-2-9).",
-        });
-      }
-      filePath = getPromotionsDailyFilePath(parsedDate);
-    } else {
-      const resolved = await resolvePromotionsDataFileForRead();
-      filePath = resolved.path;
+    if (dateParam !== undefined && !parsePromotionsDateParam(dateParam)) {
+      return res.status(400).json({
+        ok: false,
+        message: "Invalid date. Use d-m-yyyy (e.g. 9-2-2026) or yyyy-m-d (e.g. 2026-2-9).",
+      });
     }
 
-    const raw = await readFile(filePath, "utf8");
-    const parsed = raw.trim() ? JSON.parse(raw) : [];
-    const promotions = Array.isArray(parsed)
-      ? parsed
-      : parsed && Array.isArray(parsed.promotions)
-      ? parsed.promotions
-      : [];
-
-    const result = await tryUpsertPromotions(promotions, { logger: console });
+    const result = await syncPromotionsFileToSupabase({ dateParam, logger: console });
     const status = result.ok ? 200 : 500;
     res.status(status).json({
       ...result,
-      file: {
-        name: path.basename(filePath),
-        total: promotions.length,
-      },
+      target: "supabase",
+      file: result.file
+        ? {
+            ...result.file,
+            name: path.basename(result.file.path),
+          }
+        : null,
     });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
   }
-});
+}
+
+router.post("/promotions/supabase/upsert", handleSupabaseUpsert);
+router.post("/promotions/mongo/upsert", handleSupabaseUpsert);
+
+router.post("/promotions/supabase/sync", handleSupabaseSync);
+router.post("/promotions/mongo/sync", handleSupabaseSync);
 
 router.get("/promotions/data", async (req, res) => {
   const dateParam = req.query.date;
   try {
     const storage = typeof req.query.storage === "string" ? req.query.storage.trim() : "";
-    const preferMongo = storage !== "file";
+    const preferSupabase =
+      (storage === "" || storage === "auto" || storage === "supabase") &&
+      config.supabase?.promotionsEnabled;
+
+    if (storage === "supabase" && !config.supabase?.promotionsEnabled) {
+      return res.status(400).json({
+        ok: false,
+        message: "Supabase storage is disabled. Set SUPABASE_PROMOTIONS_ENABLED=true.",
+      });
+    }
+
+    if (preferSupabase) {
+      const supabaseUrl = String(config.supabase?.url || "").replace(/\/+$/, "");
+      const supabaseApiKey = String(config.supabase?.apiKey || "");
+      const supabaseTable = String(config.supabase?.table || "np_promotions");
+
+      if (!supabaseUrl || !supabaseApiKey) {
+        return res.status(500).json({
+          ok: false,
+          message: "Supabase is not configured. Missing SUPABASE_URL or SUPABASE_API_KEY.",
+        });
+      }
+
+      const normalizeString = (value) =>
+        typeof value === "string" ? value.trim() : "";
+
+      const parseDateValue = (value) => {
+        const rawValue = normalizeString(value);
+        if (!rawValue) return null;
+        if (rawValue.includes("/")) {
+          const parts = rawValue.split("/");
+          if (parts.length === 3) {
+            const [day, month, year] = parts;
+            const date = new Date(
+              Date.UTC(
+                Number.parseInt(year, 10),
+                Number.parseInt(month, 10) - 1,
+                Number.parseInt(day, 10)
+              )
+            );
+            return Number.isNaN(date.getTime()) ? null : date;
+          }
+        }
+        const date = new Date(rawValue);
+        return Number.isNaN(date.getTime()) ? null : date;
+      };
+
+      const parseContentRangeTotal = (headerValue, fallback = 0) => {
+        if (!headerValue || !headerValue.includes("/")) {
+          return fallback;
+        }
+        const rawTotal = headerValue.split("/")[1];
+        const total = Number.parseInt(rawTotal, 10);
+        return Number.isFinite(total) ? total : fallback;
+      };
+
+      const mapSupabaseRowToPromotion = (row) => ({
+        id: row?.id ?? null,
+        key: row?.key ?? null,
+        code: row?.code ?? null,
+        name: row?.name ?? null,
+        company: row?.company ?? null,
+        time: {
+          start: row?.time_start ?? null,
+          end: row?.time_end ?? null,
+        },
+        location: row?.location ?? null,
+        productType: null,
+        discountPercent: row?.discount_percent ?? null,
+        promotionMethod: null,
+        type: row?.type ?? null,
+        agencyId: row?.agency_id ?? null,
+        total: row?.total ?? null,
+        rowStt: row?.row_stt ?? null,
+        source: row?.source ?? null,
+        sourceUrl: row?.source_url ?? null,
+        crawledAt: row?.crawled_at ?? null,
+        meta: row?.meta ?? null,
+      });
+
+      const keyword = normalizeString(req.query.keyword).toLowerCase();
+      const type = normalizeString(req.query.type);
+      const source = normalizeString(req.query.source);
+
+      const applicableStartDate = parseDateValue(req.query.applicableStartDate);
+      const applicableEndDate = parseDateValue(req.query.applicableEndDate);
+      const collectedStartDate = parseDateValue(req.query.collectedStartDate);
+      const collectedEndDate = parseDateValue(req.query.collectedEndDate);
+
+      if (applicableStartDate) {
+        applicableStartDate.setUTCHours(0, 0, 0, 0);
+      }
+      if (applicableEndDate) {
+        applicableEndDate.setUTCHours(23, 59, 59, 999);
+      }
+      if (collectedStartDate) {
+        collectedStartDate.setUTCHours(0, 0, 0, 0);
+      }
+      if (collectedEndDate) {
+        collectedEndDate.setUTCHours(23, 59, 59, 999);
+      }
+
+      const pageParam = req.query.page;
+      const pageSizeParam = req.query.pageSize ?? req.query.limit;
+      const page = Math.max(1, Number.parseInt(String(pageParam ?? "1"), 10) || 1);
+      const pageSize = Math.min(
+        500,
+        Math.max(1, Number.parseInt(String(pageSizeParam ?? "20"), 10) || 20)
+      );
+
+      const buildQueryParams = (pageNumber) => {
+        const params = new URLSearchParams();
+        params.set(
+          "select",
+          "id,key,agency_id,code,company,name,location,source,source_url,type,row_stt,total,discount_percent,crawled_at,time_start,time_end,meta,updated_at"
+        );
+        params.set("order", "updated_at.desc.nullslast,crawled_at.desc.nullslast,id.desc");
+        params.set("limit", String(pageSize));
+        params.set("offset", String((pageNumber - 1) * pageSize));
+
+        if (keyword) {
+          const safeKeyword = keyword.replace(/[(),]/g, " ").replace(/\*/g, "").trim();
+          if (safeKeyword) {
+            params.set(
+              "or",
+              `(name.ilike.*${safeKeyword}*,company.ilike.*${safeKeyword}*,code.ilike.*${safeKeyword}*)`
+            );
+          }
+        }
+
+        if (type && type !== "all") {
+          params.set("type", `eq.${type}`);
+        }
+
+        if (source && source !== "all") {
+          if (source === "crawl") {
+            params.set("source", "in.(crawl,bloggiamgia)");
+          } else {
+            params.set("source", `eq.${source}`);
+          }
+        }
+
+        const andParts = [];
+        if (applicableStartDate) {
+          andParts.push(`time_start_date.gte.${applicableStartDate.toISOString()}`);
+        }
+        if (applicableEndDate) {
+          andParts.push(`time_start_date.lte.${applicableEndDate.toISOString()}`);
+        }
+        if (collectedStartDate) {
+          andParts.push(`crawled_at.gte.${collectedStartDate.toISOString()}`);
+        }
+        if (collectedEndDate) {
+          andParts.push(`crawled_at.lte.${collectedEndDate.toISOString()}`);
+        }
+        if (andParts.length > 0) {
+          params.set("and", `(${andParts.join(",")})`);
+        }
+
+        return params;
+      };
+
+      const fetchSupabasePage = async (pageNumber) => {
+        const params = buildQueryParams(pageNumber);
+        const endpoint = `${supabaseUrl}/rest/v1/${encodeURIComponent(supabaseTable)}?${params.toString()}`;
+
+        const response = await fetch(endpoint, {
+          headers: {
+            apikey: supabaseApiKey,
+            authorization: `Bearer ${supabaseApiKey}`,
+            prefer: "count=exact",
+            accept: "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          const bodyText = await response.text();
+          throw new Error(
+            `Supabase query failed (${response.status}): ${bodyText || "Unknown error"}`
+          );
+        }
+
+        const rows = await response.json();
+        const total = parseContentRangeTotal(
+          response.headers.get("content-range"),
+          Array.isArray(rows) ? rows.length : 0
+        );
+
+        return {
+          rows: Array.isArray(rows) ? rows : [],
+          total,
+        };
+      };
+
+      const firstPage = await fetchSupabasePage(page);
+      const total = firstPage.total;
+      const totalPages = total === 0 ? 0 : Math.ceil(total / pageSize);
+      const safePage = totalPages === 0 ? 1 : Math.min(page, totalPages);
+
+      const activePageData =
+        safePage !== page && totalPages > 0
+          ? await fetchSupabasePage(safePage)
+          : firstPage;
+
+      const data = activePageData.rows.map(mapSupabaseRowToPromotion);
+
+      return res.json({
+        ok: true,
+        data,
+        file: {
+          name: null,
+          reason: "supabase",
+          storage: "supabase",
+        },
+        pagination: {
+          page: safePage,
+          pageSize,
+          total,
+          totalPages,
+          hasNext: safePage < totalPages,
+          hasPrev: safePage > 1,
+        },
+      });
+    }
+
+    const preferMongo = storage === "mongo" || storage === "" || storage === "auto";
 
     if (preferMongo && config.mongo?.promotionsEnabled) {
       const normalizeString = (value) =>
