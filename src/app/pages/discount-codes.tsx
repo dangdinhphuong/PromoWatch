@@ -109,7 +109,13 @@ export function DiscountCodesPage() {
         
         const data = await response.json();
         // Map API response to Category interface
-        const mappedCategories: Category[] = (data.data || []).map((item: any) => ({
+        const mappedCategories: Category[] = (
+          Array.isArray(data?.data?.data)
+            ? data.data.data
+            : Array.isArray(data?.data)
+              ? data.data
+              : []
+        ).map((item: any) => ({
           id: item.id?.toString() || item.categoryId?.toString(),
           name: item.title || item.name,
           slug: item.slug || item.categorySlug
@@ -177,7 +183,9 @@ export function DiscountCodesPage() {
         
         const data: VoucherResponse = await response.json();
         // Map API response to DiscountCode interface
-        const mappedVouchers: DiscountCode[] = (data.data?.data || []).map((item: any) => {
+        const mappedVouchers: DiscountCode[] = (
+          Array.isArray(data?.data?.data) ? data.data.data : []
+        ).map((item: any) => {
           let discountDisplay = "0đ";
           
           if (item.voucherType === "percent") {
@@ -377,7 +385,9 @@ export function DiscountCodesPage() {
       const data: VoucherResponse = await response.json();
       
       // Map new vouchers
-      const newVouchers: DiscountCode[] = data.data.data.map((item: any) => {
+      const newVouchers: DiscountCode[] = (
+        Array.isArray(data?.data?.data) ? data.data.data : []
+      ).map((item: any) => {
         let discountDisplay = "0đ";
         
         if (item.voucherType === "percent") {
